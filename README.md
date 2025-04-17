@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <picture>
     <source srcset="public/images/logo.png"  
             media="(prefers-color-scheme: dark)">
@@ -56,3 +57,7 @@ This will start the application along with the mysql database using docker compo
 
 # License
 **[Creative Commons Attribution 4.0	cc-by-4.0](https://creativecommons.org/licenses/by/4.0/)**
+=======
+# TA-D-cashier
+Lancarkan TA saya YA ALLAH
+>>>>>>> be7733c9b9e5a12dd914f261422bc706268d0c28
