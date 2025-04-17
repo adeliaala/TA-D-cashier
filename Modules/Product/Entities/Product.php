@@ -48,4 +48,16 @@ class Product extends Model implements HasMedia
     public function getProductPriceAttribute($value) {
         return ($value / 100);
     }
+
+    public function getWholesalePrice($quantity) {
+        if ($this->min_quantity_for_wholesale && $quantity >= $this->min_quantity_for_wholesale) {
+            $discount = $this->wholesale_discount_percentage / 100;
+            return $this->product_price * (1 - $discount);
+        }
+        return $this->product_price;
+    }
+
+    public function isWholesalePrice($quantity) {
+        return $this->min_quantity_for_wholesale && $quantity >= $this->min_quantity_for_wholesale;
+    }
 }

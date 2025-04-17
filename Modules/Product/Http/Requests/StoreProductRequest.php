@@ -22,6 +22,8 @@ class StoreProductRequest extends FormRequest
             'product_quantity' => ['required', 'integer', 'min:1'],
             'product_cost' => ['required', 'numeric', 'max:2147483647'],
             'product_price' => ['required', 'numeric', 'max:2147483647'],
+            'min_quantity_for_wholesale' => ['nullable', 'integer', 'min:0'],
+            'wholesale_discount_percentage' => ['nullable', 'integer', 'min:0', 'max:100'],
             'product_stock_alert' => ['required', 'integer', 'min:0'],
             'product_order_tax' => ['nullable', 'integer', 'min:0', 'max:100'],
             'product_tax_type' => ['nullable', 'integer'],

@@ -131,6 +131,27 @@
                                 </div>
                             </div>
 
+                            <div class="form-row">
+                                <div class="col-lg-4">
+                                    <div class="form-group">
+                                        <label for="product_price">Price <span class="text-danger">*</span></label>
+                                        <input id="product_price" type="text" class="form-control" name="product_price" required>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4">
+                                    <div class="form-group">
+                                        <label for="min_quantity_for_wholesale">Minimal Quantity for Wholesale</label>
+                                        <input id="min_quantity_for_wholesale" type="number" class="form-control" name="min_quantity_for_wholesale" min="0">
+                                    </div>
+                                </div>
+                                <div class="col-lg-4">
+                                    <div class="form-group">
+                                        <label for="wholesale_discount_percentage">Wholesale Discount (%)</label>
+                                        <input id="wholesale_discount_percentage" type="number" class="form-control" name="wholesale_discount_percentage" min="0" max="100">
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="form-group">
                                 <label for="product_note">Note</label>
                                 <textarea name="product_note" id="product_note" rows="4 " class="form-control"></textarea>

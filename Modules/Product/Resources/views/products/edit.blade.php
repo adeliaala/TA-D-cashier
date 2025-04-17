@@ -73,10 +73,22 @@
                                         <input id="product_cost" type="text" class="form-control" min="0" name="product_cost" required value="{{ $product->product_cost }}">
                                     </div>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-lg-4">
                                     <div class="form-group">
                                         <label for="product_price">Price <span class="text-danger">*</span></label>
-                                        <input id="product_price" type="text" class="form-control" min="0" name="product_price" required value="{{ $product->product_price }}">
+                                        <input id="product_price" type="text" class="form-control" name="product_price" required value="{{ $product->product_price }}">
+                                    </div>
+                                </div>
+                                <div class="col-lg-4">
+                                    <div class="form-group">
+                                        <label for="min_quantity_for_wholesale">Minimal Quantity for Wholesale</label>
+                                        <input id="min_quantity_for_wholesale" type="number" class="form-control" name="min_quantity_for_wholesale" min="0" value="{{ $product->min_quantity_for_wholesale }}">
+                                    </div>
+                                </div>
+                                <div class="col-lg-4">
+                                    <div class="form-group">
+                                        <label for="wholesale_discount_percentage">Wholesale Discount (%)</label>
+                                        <input id="wholesale_discount_percentage" type="number" class="form-control" name="wholesale_discount_percentage" min="0" max="100" value="{{ $product->wholesale_discount_percentage }}">
                                     </div>
                                 </div>
                             </div>

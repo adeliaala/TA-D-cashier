@@ -213,6 +213,15 @@ class ProductCart extends Component
             }
             $product_price = $this->unit_price[$product['id']];
         }
+
+        // Check if wholesale price should be applied
+        if (isset($product['min_quantity_for_wholesale']) && 
+            isset($product['wholesale_discount_percentage']) &&
+            $this->quantity[$product['id']] >= $product['min_quantity_for_wholesale']) {
+            $discount = $product['wholesale_discount_percentage'] / 100;
+            $product_price = $product_price * (1 - $discount);
+        }
+
         $price = 0;
         $unit_price = 0;
         $product_tax = 0;
