@@ -1,34 +1,19 @@
 <?php
 
-if (!function_exists('settings')) {
-    function settings() {
-        $settings = cache()->remember('settings', 24*60, function () {
-            return \Modules\Setting\Entities\Setting::firstOrFail();
-        });
+use Modules\Setting\Entities\Setting;
 
-        return $settings;
+if (!function_exists('settings')) {
+    function settings()
+    {
+        return Setting::first();
     }
 }
 
 if (!function_exists('format_currency')) {
-    function format_currency($value, $format = true) {
-        if (!$format) {
-            return $value;
-        }
-
+    function format_currency($price)
+    {
         $settings = settings();
-        $position = $settings->default_currency_position;
-        $symbol = $settings->currency->symbol;
-        $decimal_separator = $settings->currency->decimal_separator;
-        $thousand_separator = $settings->currency->thousand_separator;
-
-        if ($position == 'prefix') {
-            $formatted_value = $symbol . number_format((float) $value, 2, $decimal_separator, $thousand_separator);
-        } else {
-            $formatted_value = number_format((float) $value, 2, $decimal_separator, $thousand_separator) . $symbol;
-        }
-
-        return $formatted_value;
+        return $settings->currency->symbol . ' ' . number_format($price, 0, $settings->currency->decimal_separator, $settings->currency->thousand_separator) . ',-';
     }
 }
 

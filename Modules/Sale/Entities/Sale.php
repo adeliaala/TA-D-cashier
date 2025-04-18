@@ -9,7 +9,20 @@ class Sale extends Model
 {
     use HasFactory;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'date',
+        'reference',
+        'customer_id',
+        'customer_name',
+        'discount_percentage',
+        'discount_amount',
+        'total_amount',
+        'paid_amount',
+        'due_amount',
+        'payment_status',
+        'payment_method',
+        'note'
+    ];
 
     public function saleDetails() {
         return $this->hasMany(SaleDetails::class, 'sale_id', 'id');
@@ -32,10 +45,6 @@ class Sale extends Model
         return $query->where('status', 'Completed');
     }
 
-    public function getShippingAmountAttribute($value) {
-        return $value / 100;
-    }
-
     public function getPaidAmountAttribute($value) {
         return $value / 100;
     }
@@ -45,10 +54,6 @@ class Sale extends Model
     }
 
     public function getDueAmountAttribute($value) {
-        return $value / 100;
-    }
-
-    public function getTaxAmountAttribute($value) {
         return $value / 100;
     }
 

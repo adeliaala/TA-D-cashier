@@ -85,27 +85,27 @@
                 <div class="col-md-12">
                     <div class="table-responsive">
                         <table class="table table-striped">
-                            <tr>
+                            {{-- <tr>
                                 <th>Order Tax ({{ $global_tax }}%)</th>
                                 <td>(+) {{ format_currency(Cart::instance($cart_instance)->tax()) }}</td>
-                            </tr>
+                            </tr> --}}
                             <tr>
                                 <th>Discount ({{ $global_discount }}%)</th>
                                 <td>(-) {{ format_currency(Cart::instance($cart_instance)->discount()) }}</td>
                             </tr>
-                            <tr>
+                            {{-- <tr>
                                 <th>Shipping</th>
                                 <input type="hidden" value="{{ $shipping }}" name="shipping_amount">
                                 <td>(+) {{ format_currency($shipping) }}</td>
-                            </tr>
+                            </tr> --}}
                             <tr class="text-primary">
                                 <th>Grand Total</th>
                                 @php
-                                    $total_with_shipping = Cart::instance($cart_instance)->total() + (float) $shipping
-                                @endphp
-                                <th>
-                                    (=) {{ format_currency($total_with_shipping) }}
-                                </th>
+                                $total_with_discount = Cart::instance($cart_instance)->total()
+                            @endphp
+                            <th>
+                                (=) {{ format_currency($total_with_discount) }}
+                            </th>                            
                             </tr>
                         </table>
                     </div>
@@ -113,24 +113,24 @@
             </div>
 
             <div class="form-row">
-                <div class="col-lg-4">
+                {{-- <div class="col-lg-4">
                     <div class="form-group">
                         <label for="tax_percentage">Order Tax (%)</label>
                         <input wire:model.blur="global_tax" type="number" class="form-control" min="0" max="100" value="{{ $global_tax }}" required>
                     </div>
-                </div>
+                </div> --}}
                 <div class="col-lg-4">
                     <div class="form-group">
                         <label for="discount_percentage">Discount (%)</label>
                         <input wire:model.blur="global_discount" type="number" class="form-control" min="0" max="100" value="{{ $global_discount }}" required>
                     </div>
                 </div>
-                <div class="col-lg-4">
+                {{-- <div class="col-lg-4">
                     <div class="form-group">
                         <label for="shipping_amount">Shipping</label>
                         <input wire:model.blur="shipping" type="number" class="form-control" min="0" value="0" required step="0.01">
                     </div>
-                </div>
+                </div> --}}
             </div>
 
             <div class="form-group d-flex justify-content-center flex-wrap mb-0">
