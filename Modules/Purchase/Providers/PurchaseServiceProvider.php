@@ -4,6 +4,8 @@ namespace Modules\Purchase\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Database\Eloquent\Factory;
+use Livewire\Livewire;
+use Modules\Purchase\Http\Livewire\CreatePurchase;
 
 class PurchaseServiceProvider extends ServiceProvider
 {
@@ -24,10 +26,13 @@ class PurchaseServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        $this->registerTranslations();
         $this->registerConfig();
         $this->registerViews();
         $this->loadMigrationsFrom(module_path($this->moduleName, 'Database/Migrations'));
+        $this->loadRoutesFrom(module_path($this->moduleName, 'Routes/web.php'));
+
+        // Register Livewire Component
+        Livewire::component('purchase::create-purchase', CreatePurchase::class);
     }
 
     /**
@@ -63,7 +68,6 @@ class PurchaseServiceProvider extends ServiceProvider
     public function registerViews()
     {
         $viewPath = resource_path('views/modules/' . $this->moduleNameLower);
-
         $sourcePath = module_path($this->moduleName, 'Resources/views');
 
         $this->publishes([

@@ -1,4 +1,4 @@
-@extends('core::layouts.master')
+@extends('layouts.app')
 
 @section('title')
     Create Branch

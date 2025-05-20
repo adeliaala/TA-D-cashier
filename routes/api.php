@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ProductBatchController;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,4 +17,11 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
+});
+
+// Product Batch Routes
+Route::prefix('product-batches')->group(function () {
+    Route::post('/', [ProductBatchController::class, 'store']);
+    Route::get('/stock/{productId}/{branchId}', [ProductBatchController::class, 'getStock']);
+    Route::post('/deduct', [ProductBatchController::class, 'deductStock']);
 });

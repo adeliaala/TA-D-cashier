@@ -24,7 +24,10 @@
             <i class="bi bi-bell" style="font-size: 20px;"></i>
             <span class="badge badge-pill badge-danger">
             @php
-                $low_quantity_products = \Modules\Product\Entities\Product::select('id', 'product_quantity', 'product_stock_alert', 'product_code')->whereColumn('product_quantity', '<=', 'product_stock_alert')->get();
+                $low_quantity_products = \Modules\Product\Entities\Product::select('id', 'product_code', 'product_stock_alert')
+                    ->withSum('batches', 'qty', 'batches_sum_qty')
+                    ->having('batches_sum_qty', '<=', DB::raw('product_stock_alert'))
+                    ->get();
                 echo $low_quantity_products->count();
             @endphp
             </span>

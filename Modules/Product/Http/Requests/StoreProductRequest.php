@@ -13,24 +13,19 @@ class StoreProductRequest extends FormRequest
      * @return array
      */
     public function rules()
-    {
-        return [
-            'product_name' => ['required', 'string', 'max:255'],
-            'product_code' => ['required', 'string', 'max:255', 'unique:products,product_code'],
-            'product_barcode_symbology' => ['required', 'string', 'max:255'],
-            'product_unit' => ['required', 'string', 'max:255'],
-            'product_quantity' => ['required', 'integer', 'min:1'],
-            'product_cost' => ['required', 'numeric', 'max:2147483647'],
-            'product_price' => ['required', 'numeric', 'max:2147483647'],
-            'min_quantity_for_wholesale' => ['nullable', 'integer', 'min:0'],
-            'wholesale_discount_percentage' => ['nullable', 'integer', 'min:0', 'max:100'],
-            'product_stock_alert' => ['required', 'integer', 'min:0'],
-            'product_order_tax' => ['nullable', 'integer', 'min:0', 'max:100'],
-            'product_tax_type' => ['nullable', 'integer'],
-            'product_note' => ['nullable', 'string', 'max:1000'],
-            'category_id' => ['required', 'integer']
-        ];
-    }
+{
+    return [
+        'product_name' => 'required|string|max:255',
+        'product_code' => 'required|string|max:255|unique:products,product_code',
+        'category_id' => 'nullable|exists:categories,id',
+        'product_unit' => 'nullable|string|max:50',
+        'barcode_symbology' => 'nullable|string', // masih ada? kalau tidak, hapus juga
+        'product_stock_alert' => 'nullable|numeric', // kalau sudah dihapus dari DB, hapus rule-nya juga
+        'product_note' => 'nullable|string',
+    ];
+}
+
+
 
     /**
      * Determine if the user is authorized to make this request.

@@ -1,5 +1,5 @@
 {
-    "name": "nwidart/purchase",
+    "name": "nwidart/purchase-module",
     "description": "",
     "authors": [
         {
@@ -9,10 +9,10 @@
     ],
     "extra": {
         "laravel": {
-            "providers": [],
-            "aliases": {
-
-            }
+            "providers": [
+                "Modules\\Purchase\\Providers\\PurchaseServiceProvider",
+                "Modules\\Purchase\\Providers\\RouteServiceProvider"
+            ]
         }
     },
     "autoload": {

@@ -14,6 +14,10 @@ use Modules\Purchase\Entities\PurchaseDetail;
 use Modules\Purchase\Entities\PurchasePayment;
 use Modules\Purchase\Http\Requests\StorePurchaseRequest;
 use Modules\Purchase\Http\Requests\UpdatePurchaseRequest;
+use App\Models\ProductBatch;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PurchaseController extends Controller
 {
@@ -25,83 +29,143 @@ class PurchaseController extends Controller
     }
 
 
-    public function create() {
-        abort_if(Gate::denies('create_purchases'), 403);
-
-        Cart::instance('purchase')->destroy();
-
+    public function create()
+    {
         return view('purchase::create');
     }
 
 
-    public function store(StorePurchaseRequest $request) {
-        DB::transaction(function () use ($request) {
-            $due_amount = $request->total_amount - $request->paid_amount;
-            if ($due_amount == $request->total_amount) {
-                $payment_status = 'Unpaid';
-            } elseif ($due_amount > 0) {
-                $payment_status = 'Partial';
-            } else {
-                $payment_status = 'Paid';
-            }
+    public function store(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'reference_no' => 'required|string',
+            'supplier_id' => 'required|exists:suppliers,id',
+            'date' => 'required|date',
+            'payment_method' => 'required|string',
+            'paid_amount' => 'required|numeric|min:0',
+            'products' => 'required|array|min:1',
+            'products.*.product_id' => 'required|exists:products,id',
+            'products.*.quantity' => 'required|integer|min:1',
+            'products.*.purchase_price' => 'required|numeric|min:0',
+            'products.*.expired_date' => 'nullable|date|after:today',
+            'discount_percentage' => 'nullable|numeric|min:0',
+            'discount_amount' => 'nullable|numeric|min:0',
+            'note' => 'nullable|string'
+        ]);
 
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            // Calculate total amount
+            $totalAmount = collect($request->products)->sum(function ($product) {
+                return $product['quantity'] * $product['purchase_price'];
+            });
+
+            // Calculate due amount
+            $dueAmount = $totalAmount - $request->paid_amount;
+
+            // Determine payment status
+            $paymentStatus = $request->paid_amount == 0 ? 'Unpaid' : 
+                           ($dueAmount == 0 ? 'Paid' : 'Partial');
+
+            // 1. Simpan ke purchases
             $purchase = Purchase::create([
-                'date' => $request->date,
+                'reference_no' => $request->reference_no,
                 'supplier_id' => $request->supplier_id,
-                'supplier_name' => Supplier::findOrFail($request->supplier_id)->supplier_name,
-                'tax_percentage' => $request->tax_percentage,
-                'discount_percentage' => $request->discount_percentage,
-                'shipping_amount' => $request->shipping_amount * 100,
-                'paid_amount' => $request->paid_amount * 100,
-                'total_amount' => $request->total_amount * 100,
-                'due_amount' => $due_amount * 100,
-                'status' => $request->status,
-                'payment_status' => $payment_status,
+                'supplier_name' => Supplier::findOrFail($request->supplier_id)->name,
+                'date' => $request->date,
+                'discount_percentage' => $request->discount_percentage ?? 0,
+                //'discount_amount' => $request->discount_amount ?? 0,
                 'payment_method' => $request->payment_method,
+                'paid_amount' => round($request->paid_amount * 100),
+                'total_amount' => round($totalAmount * 100),
+                'discount_amount' => round($request->discount_amount * 100),
+                'due_amount' => $dueAmount,
+                'payment_status' => $paymentStatus,
                 'note' => $request->note,
-                'tax_amount' => Cart::instance('purchase')->tax() * 100,
-                'discount_amount' => Cart::instance('purchase')->discount() * 100,
+                'user_id' => auth()->id(),
+                'branch_id' => session(['active_branch' => 1]),// contoh ID cabang default
+                'created_by' => auth()->user()->name,
+                'updated_by' => auth()->user()->name
             ]);
 
-            foreach (Cart::instance('purchase')->content() as $cart_item) {
+            // 2. Simpan detail produk & batch
+            foreach ($request->products as $product) {
+                // Detail
                 PurchaseDetail::create([
                     'purchase_id' => $purchase->id,
-                    'product_id' => $cart_item->id,
-                    'product_name' => $cart_item->name,
-                    'product_code' => $cart_item->options->code,
-                    'quantity' => $cart_item->qty,
-                    'price' => $cart_item->price * 100,
-                    'unit_price' => $cart_item->options->unit_price * 100,
-                    'sub_total' => $cart_item->options->sub_total * 100,
-                    'product_discount_amount' => $cart_item->options->product_discount * 100,
-                    'product_discount_type' => $cart_item->options->product_discount_type,
-                    'product_tax_amount' => $cart_item->options->product_tax * 100,
+                    'product_id' => $product['product_id'],
+                    'product_name' => Product::findOrFail($product['product_id'])->product_name,
+                    'product_code' => Product::findOrFail($product['product_id'])->product_code,
+                    'quantity' => $product['quantity'],
+                    'price' => $product['purchase_price'],
+                    'unit_price' => $product['purchase_price'],
+                    'sub_total' => $product['quantity'] * $product['purchase_price'],
+                    'product_discount_amount' => 0,
+                    'product_discount_type' => 'fixed',
+                    'product_tax_amount' => 0,
+                    'created_by' => auth()->user()->name,
+                    'updated_by' => auth()->user()->name
                 ]);
 
-                if ($request->status == 'Completed') {
-                    $product = Product::findOrFail($cart_item->id);
-                    $product->update([
-                        'product_quantity' => $product->product_quantity + $cart_item->qty
-                    ]);
-                }
+                // Batch
+                ProductBatch::addStock([
+                    'product_id' => $product['product_id'],
+                    'branch_id' => session(['active_branch' => 1]), // contoh ID cabang default,
+                    'quantity' => $product['quantity'],
+                    'purchase_price' => $product['purchase_price'],
+                    'expired_date' => $product['expired_date'],
+                    'purchase_id' => $purchase->id,
+                    'batch_code' => $purchase->reference_no . '-' . $product['product_id'],
+                    'created_by' => auth()->user()->name,
+                    'updated_by' => auth()->user()->name
+                ]);
             }
 
-            Cart::instance('purchase')->destroy();
-
+            // 3. Simpan pembayaran (jika ada)
             if ($purchase->paid_amount > 0) {
                 PurchasePayment::create([
-                    'date' => $request->date,
-                    'reference' => 'INV/'.$purchase->reference,
-                    'amount' => $purchase->paid_amount,
                     'purchase_id' => $purchase->id,
-                    'payment_method' => $request->payment_method
+                    'branch_id' => session(['active_branch' => 1]), // contoh ID cabang default,
+                    'amount' => $purchase->paid_amount,
+                    'date' => $purchase->date,
+                    'reference' => 'PAY-' . $purchase->reference_no,
+                    'payment_method' => $purchase->payment_method,
+                    'note' => 'Initial payment for purchase ' . $purchase->reference_no,
+                    'created_by' => auth()->user()->name,
+                    'updated_by' => auth()->user()->name
                 ]);
             }
-        });
 
-        toast('Purchase Created!', 'success');
+            DB::commit();
 
-        return redirect()->route('purchases.index');
+            return response()->json([
+                'message' => 'Purchase created successfully',
+                'data' => $purchase
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Failed to create purchase',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getStock(Request $request, $productId, $branchId)
+    {
+        $stock = ProductBatch::getAvailableStock($productId, $branchId);
+        return response()->json([
+            'data' => $stock
+        ]);
     }
 
 
@@ -226,5 +290,18 @@ class PurchaseController extends Controller
         toast('Purchase Deleted!', 'warning');
 
         return redirect()->route('purchases.index');
+    }
+
+    public function pdf($id)
+    {
+        $purchase = Purchase::findOrFail($id);
+        $supplier = Supplier::findOrFail($purchase->supplier_id);
+
+        $pdf = PDF::loadView('purchase::print', [
+            'purchase' => $purchase,
+            'supplier' => $supplier,
+        ])->setPaper('a4');
+
+        return $pdf->stream('purchase-'. $purchase->reference .'.pdf');
     }
 }

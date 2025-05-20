@@ -1,42 +1,41 @@
-<div class="btn-group dropleft">
-    <button type="button" class="btn btn-ghost-primary dropdown rounded" data-toggle="dropdown" aria-expanded="false">
-        <i class="bi bi-three-dots-vertical"></i>
+<div class="btn-group">
+    <a href="{{ route('purchases.show', $id) }}" class="btn btn-info btn-sm">
+        <i class="fas fa-eye"></i>
+    </a>
+    <a href="{{ route('purchases.edit', $id) }}" class="btn btn-primary btn-sm">
+        <i class="fas fa-edit"></i>
+    </a>
+    <a href="{{ route('purchases.pdf', $id) }}" class="btn btn-secondary btn-sm" target="_blank">
+        <i class="fas fa-print"></i>
+    </a>
+    <button type="button" class="btn btn-danger btn-sm" onclick="deletePurchase({{ $id }})">
+        <i class="fas fa-trash"></i>
     </button>
-    <div class="dropdown-menu">
-        @can('access_purchase_payments')
-            <a href="{{ route('purchase-payments.index', $data->id) }}" class="dropdown-item">
-                <i class="bi bi-cash-coin mr-2 text-warning" style="line-height: 1;"></i> Show Payments
-            </a>
-        @endcan
-        @can('access_purchase_payments')
-            @if($data->due_amount > 0)
-                <a href="{{ route('purchase-payments.create', $data->id) }}" class="dropdown-item">
-                    <i class="bi bi-plus-circle-dotted mr-2 text-success" style="line-height: 1;"></i> Add Payment
-                </a>
-            @endif
-        @endcan
-        @can('edit_purchases')
-            <a href="{{ route('purchases.edit', $data->id) }}" class="dropdown-item">
-                <i class="bi bi-pencil mr-2 text-primary" style="line-height: 1;"></i> Edit
-            </a>
-        @endcan
-        @can('show_purchases')
-            <a href="{{ route('purchases.show', $data->id) }}" class="dropdown-item">
-                <i class="bi bi-eye mr-2 text-info" style="line-height: 1;"></i> Details
-            </a>
-        @endcan
-        @can('delete_purchases')
-            <button id="delete" class="dropdown-item" onclick="
-                event.preventDefault();
-                if (confirm('Are you sure? It will delete the data permanently!')) {
-                document.getElementById('destroy{{ $data->id }}').submit()
-                }">
-                <i class="bi bi-trash mr-2 text-danger" style="line-height: 1;"></i> Delete
-                <form id="destroy{{ $data->id }}" class="d-none" action="{{ route('purchases.destroy', $data->id) }}" method="POST">
-                    @csrf
-                    @method('delete')
-                </form>
-            </button>
-        @endcan
-    </div>
 </div>
+
+@push('scripts')
+<script>
+    function deletePurchase(id) {
+        if (confirm('Are you sure you want to delete this purchase?')) {
+            $.ajax({
+                url: `/purchases/${id}`,
+                type: 'DELETE',
+                data: {
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        toastr.success(response.message);
+                        $('#purchases-table').DataTable().ajax.reload();
+                    } else {
+                        toastr.error(response.message);
+                    }
+                },
+                error: function(error) {
+                    toastr.error('An error occurred while deleting the purchase.');
+                }
+            });
+        }
+    }
+</script>
+@endpush

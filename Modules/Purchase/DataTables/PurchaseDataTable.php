@@ -11,35 +11,43 @@ use Yajra\DataTables\Services\DataTable;
 
 class PurchaseDataTable extends DataTable
 {
-
-    public function dataTable($query) {
+    public function dataTable($query)
+    {
         return datatables()
             ->eloquent($query)
-            ->addColumn('total_amount', function ($data) {
+            ->addColumn('action', function ($data) {
+                return view('purchase::partials.actions', [
+                    'id' => $data->id
+                ]);
+            })
+            ->editColumn('total_amount', function ($data) {
                 return format_currency($data->total_amount);
             })
-            ->addColumn('paid_amount', function ($data) {
+            ->editColumn('paid_amount', function ($data) {
                 return format_currency($data->paid_amount);
             })
-            ->addColumn('due_amount', function ($data) {
+            ->editColumn('due_amount', function ($data) {
                 return format_currency($data->due_amount);
             })
-            ->addColumn('status', function ($data) {
-                return view('purchase::partials.status', compact('data'));
+            ->editColumn('status', function ($data) {
+                return view('purchase::partials.status', [
+                    'status' => $data->status
+                ]);
             })
-            ->addColumn('payment_status', function ($data) {
-                return view('purchase::partials.payment-status', compact('data'));
-            })
-            ->addColumn('action', function ($data) {
-                return view('purchase::partials.actions', compact('data'));
+            ->editColumn('payment_status', function ($data) {
+                return view('purchase::partials.payment-status', [
+                    'payment_status' => $data->payment_status
+                ]);
             });
     }
 
-    public function query(Purchase $model) {
+    public function query(Purchase $model)
+    {
         return $model->newQuery();
     }
 
-    public function html() {
+    public function html()
+    {
         return $this->builder()
             ->setTableId('purchases-table')
             ->columns($this->getColumns())
@@ -47,50 +55,64 @@ class PurchaseDataTable extends DataTable
             ->dom("<'row'<'col-md-3'l><'col-md-5 mb-2'B><'col-md-4'f>> .
                                 'tr' .
                                 <'row'<'col-md-5'i><'col-md-7 mt-2'p>>")
-            ->orderBy(8)
+            ->orderBy(0)
             ->buttons(
                 Button::make('excel')
-                    ->text('<i class="bi bi-file-earmark-excel-fill"></i> Excel'),
+                    ->text('<i class="bi bi-file-earmark-excel-fill"></i> Excel')
+                    ->className('btn btn-success btn-sm no-corner'),
                 Button::make('print')
-                    ->text('<i class="bi bi-printer-fill"></i> Print'),
+                    ->text('<i class="bi bi-printer-fill"></i> Print')
+                    ->className('btn btn-primary btn-sm no-corner'),
                 Button::make('reset')
-                    ->text('<i class="bi bi-x-circle"></i> Reset'),
+                    ->text('<i class="bi bi-x-circle"></i> Reset')
+                    ->className('btn btn-warning btn-sm no-corner'),
                 Button::make('reload')
                     ->text('<i class="bi bi-arrow-repeat"></i> Reload')
+                    ->className('btn btn-info btn-sm no-corner')
             );
     }
 
-    protected function getColumns() {
+    protected function getColumns()
+    {
         return [
+            Column::make('date')
+                ->title('Date')
+                ->className('text-center align-middle'),
+
             Column::make('reference')
+                ->title('Reference')
                 ->className('text-center align-middle'),
 
             Column::make('supplier_name')
                 ->title('Supplier')
                 ->className('text-center align-middle'),
 
-            Column::computed('status')
+            Column::make('status')
+                ->title('Status')
                 ->className('text-center align-middle'),
 
-            Column::computed('total_amount')
+            Column::make('payment_status')
+                ->title('Payment Status')
                 ->className('text-center align-middle'),
 
-            Column::computed('paid_amount')
+            Column::make('total_amount')
+                ->title('Total')
                 ->className('text-center align-middle'),
 
-            Column::computed('due_amount')
+            Column::make('paid_amount')
+                ->title('Paid')
                 ->className('text-center align-middle'),
 
-            Column::computed('payment_status')
+            Column::make('due_amount')
+                ->title('Due')
                 ->className('text-center align-middle'),
 
             Column::computed('action')
+                ->title('Action')
                 ->exportable(false)
                 ->printable(false)
-                ->className('text-center align-middle'),
-
-            Column::make('created_at')
-                ->visible(false)
+                ->className('text-center align-middle')
+                ->addClass('text-center'),
         ];
     }
 

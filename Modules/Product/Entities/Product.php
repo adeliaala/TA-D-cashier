@@ -8,6 +8,7 @@ use Modules\Product\Notifications\NotifyQuantityAlert;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use App\Models\ProductBatch;
 
 class Product extends Model implements HasMedia
 {
@@ -18,8 +19,18 @@ class Product extends Model implements HasMedia
 
     protected $with = ['media'];
 
+    protected $appends = ['product_quantity'];
+
     public function category() {
         return $this->belongsTo(Category::class, 'category_id', 'id');
+    }
+
+    public function batches() {
+        return $this->hasMany(ProductBatch::class, 'product_id', 'id');
+    }
+
+    public function getProductQuantityAttribute() {
+        return $this->batches()->sum('quantity');
     }
 
     public function registerMediaCollections(): void {

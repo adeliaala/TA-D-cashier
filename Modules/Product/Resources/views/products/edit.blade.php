@@ -53,80 +53,6 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="barcode_symbology">Barcode Symbology <span class="text-danger">*</span></label>
-                                        <select class="form-control" name="product_barcode_symbology" id="barcode_symbology" required>
-                                            <option {{ $product->product_barcode_symbology == 'C128' ? 'selected' : '' }} value="C128">Code 128</option>
-                                            <option {{ $product->product_barcode_symbology == 'C39' ? 'selected' : '' }} value="C39">Code 39</option>
-                                            <option {{ $product->product_barcode_symbology == 'UPCA' ? 'selected' : '' }} value="UPCA">UPC-A</option>
-                                            <option {{ $product->product_barcode_symbology == 'UPCE' ? 'selected' : '' }} value="UPCE">UPC-E</option>
-                                            <option {{ $product->product_barcode_symbology == 'EAN13' ? 'selected' : '' }} value="EAN13">EAN-13</option>
-                                            <option {{ $product->product_barcode_symbology == 'EAN8' ? 'selected' : '' }} value="EAN8">EAN-8</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="form-row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="product_cost">Cost <span class="text-danger">*</span></label>
-                                        <input id="product_cost" type="text" class="form-control" min="0" name="product_cost" required value="{{ $product->product_cost }}">
-                                    </div>
-                                </div>
-                                <div class="col-lg-4">
-                                    <div class="form-group">
-                                        <label for="product_price">Price <span class="text-danger">*</span></label>
-                                        <input id="product_price" type="text" class="form-control" name="product_price" required value="{{ $product->product_price }}">
-                                    </div>
-                                </div>
-                                <div class="col-lg-4">
-                                    <div class="form-group">
-                                        <label for="min_quantity_for_wholesale">Minimal Quantity for Wholesale</label>
-                                        <input id="min_quantity_for_wholesale" type="number" class="form-control" name="min_quantity_for_wholesale" min="0" value="{{ $product->min_quantity_for_wholesale }}">
-                                    </div>
-                                </div>
-                                <div class="col-lg-4">
-                                    <div class="form-group">
-                                        <label for="wholesale_discount_percentage">Wholesale Discount (%)</label>
-                                        <input id="wholesale_discount_percentage" type="number" class="form-control" name="wholesale_discount_percentage" min="0" max="100" value="{{ $product->wholesale_discount_percentage }}">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="form-row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="product_quantity">Quantity <span class="text-danger">*</span></label>
-                                        <input type="number" class="form-control" name="product_quantity" required value="{{ $product->product_quantity }}" min="1">
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="product_stock_alert">Alert Quantity <span class="text-danger">*</span></label>
-                                        <input type="number" class="form-control" name="product_stock_alert" required value="{{ $product->product_stock_alert }}" min="0">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="form-row">
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label for="product_order_tax">Tax (%)</label>
-                                        <input type="number" class="form-control" name="product_order_tax" value="{{ $product->product_order_tax }}" min="0" max="100">
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label for="product_tax_type">Tax type</label>
-                                        <select class="form-control" name="product_tax_type" id="product_tax_type">
-                                            <option value="" selected>None</option>
-                                            <option {{ $product->product_tax_type == 1 ? 'selected' : '' }}  value="1">Exclusive</option>
-                                            <option {{ $product->product_tax_type == 2 ? 'selected' : '' }} value="2">Inclusive</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
                                         <label for="product_unit">Unit <i class="bi bi-question-circle-fill text-info" data-toggle="tooltip" data-placement="top" title="This short text will be placed after Product Quantity."></i> <span class="text-danger">*</span></label>
                                         <select class="form-control" name="product_unit" id="product_unit" required>
                                             <option value="" selected >Select Unit</option>
@@ -137,6 +63,16 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <div class="form-row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="product_stock_alert">Stock Alert <i class="bi bi-question-circle-fill text-info" data-toggle="tooltip" data-placement="top" title="Minimum stock level to trigger alert"></i></label>
+                                        <input type="number" class="form-control" name="product_stock_alert" value="{{ old('product_stock_alert', $product->product_stock_alert) }}" min="0">
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="form-group">
                                 <label for="product_note">Note</label>
                                 <textarea name="product_note" id="product_note" rows="4 " class="form-control">{{ $product->product_note }}</textarea>
@@ -172,28 +108,27 @@
     <script>
         var uploadedDocumentMap = {}
         Dropzone.options.documentDropzone = {
-            url: '{{ route('dropzone.upload') }}',
+            url: "{{ route('dropzone.upload') }}",
             maxFilesize: 1,
-            acceptedFiles: '.jpg, .jpeg, .png',
+            acceptedFiles: ".jpeg,.jpg,.png,.gif",
             maxFiles: 3,
             addRemoveLinks: true,
-            dictRemoveFile: "<i class='bi bi-x-circle text-danger'></i> remove",
             headers: {
                 'X-CSRF-TOKEN': "{{ csrf_token() }}"
             },
             success: function (file, response) {
-                $('form').append('<input type="hidden" name="document[]" value="' + response.name + '">');
-                uploadedDocumentMap[file.name] = response.name;
+                $('form').append('<input type="hidden" name="document[]" value="' + response.name + '">')
+                uploadedDocumentMap[file.name] = response.name
             },
             removedfile: function (file) {
-                file.previewElement.remove();
-                var name = '';
+                file.previewElement.remove()
+                var name = ''
                 if (typeof file.file_name !== 'undefined') {
-                    name = file.file_name;
+                    name = file.file_name
                 } else {
-                    name = uploadedDocumentMap[file.name];
+                    name = uploadedDocumentMap[file.name]
                 }
-                $('form').find('input[name="document[]"][value="' + name + '"]').remove();
+                $('form').find('input[name="document[]"][value="' + name + '"]').remove()
             },
             init: function () {
                 @if(isset($product) && $product->getMedia('images'))
@@ -208,32 +143,6 @@
                 @endif
             }
         }
-    </script>
-
-    <script src="{{ asset('js/jquery-mask-money.js') }}"></script>
-    <script>
-        $(document).ready(function () {
-            $('#product_cost').maskMoney({
-                prefix:'{{ settings()->currency->symbol }}',
-                thousands:'{{ settings()->currency->thousand_separator }}',
-                decimal:'{{ settings()->currency->decimal_separator }}',
-            });
-            $('#product_price').maskMoney({
-                prefix:'{{ settings()->currency->symbol }}',
-                thousands:'{{ settings()->currency->thousand_separator }}',
-                decimal:'{{ settings()->currency->decimal_separator }}',
-            });
-
-            $('#product_cost').maskMoney('mask');
-            $('#product_price').maskMoney('mask');
-
-            $('#product-form').submit(function () {
-                var product_cost = $('#product_cost').maskMoney('unmasked')[0];
-                var product_price = $('#product_price').maskMoney('unmasked')[0];
-                $('#product_cost').val(product_cost);
-                $('#product_price').val(product_price);
-            });
-        });
     </script>
 @endpush
 

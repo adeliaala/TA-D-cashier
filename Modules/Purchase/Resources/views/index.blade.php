@@ -14,27 +14,21 @@
 @endsection
 
 @section('content')
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-body">
-                        <a href="{{ route('purchases.create') }}" class="btn btn-primary">
-                            Add Purchase <i class="bi bi-plus"></i>
-                        </a>
-
-                        <hr>
-
-                        <div class="table-responsive">
-                            {!! $dataTable->table() !!}
-                        </div>
-                    </div>
-                </div>
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Purchases</h3>
+            <div class="card-tools">
+                <a href="{{ route('purchases.create') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Create Purchase
+                </a>
             </div>
+        </div>
+        <div class="card-body">
+            {{ $dataTable->table() }}
         </div>
     </div>
 @endsection
 
-@push('page_scripts')
-    {!! $dataTable->scripts() !!}
+@push('scripts')
+    {{ $dataTable->scripts() }}
 @endpush
