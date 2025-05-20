@@ -58,4 +58,9 @@ class User extends Authenticatable implements HasMedia
     public function scopeIsActive(Builder $builder) {
         return $builder->where('is_active', 1);
     }
+
+    public function branches()
+    {
+        return $this->belongsToMany(Branch::class, 'branch_user')->withTimestamps();
+    }
 }

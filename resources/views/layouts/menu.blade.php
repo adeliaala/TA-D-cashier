@@ -4,6 +4,28 @@
     </a>
 </li>
 
+@can('access_branches')
+<li class="c-sidebar-nav-item c-sidebar-nav-dropdown {{ request()->routeIs('branch.*') ? 'c-show' : '' }}">
+    <a class="c-sidebar-nav-link c-sidebar-nav-dropdown-toggle" href="#">
+        <i class="c-sidebar-nav-icon bi bi-building" style="line-height: 1;"></i> Branches
+    </a>
+    <ul class="c-sidebar-nav-dropdown-items">
+        @can('create_branches')
+        <li class="c-sidebar-nav-item">
+            <a class="c-sidebar-nav-link {{ request()->routeIs('branch.create') ? 'c-active' : '' }}" href="{{ route('branch.create') }}">
+                <i class="c-sidebar-nav-icon bi bi-journal-plus" style="line-height: 1;"></i> Create Branch
+            </a>
+        </li>
+        @endcan
+        <li class="c-sidebar-nav-item">
+            <a class="c-sidebar-nav-link {{ request()->routeIs('branch.index') ? 'c-active' : '' }}" href="{{ route('branch.index') }}">
+                <i class="c-sidebar-nav-icon bi bi-journals" style="line-height: 1;"></i> All Branches
+            </a>
+        </li>
+    </ul>
+</li>
+@endcan
+
 @can('access_products')
 <li class="c-sidebar-nav-item c-sidebar-nav-dropdown {{ request()->routeIs('products.*') || request()->routeIs('product-categories.*') ? 'c-show' : '' }}">
     <a class="c-sidebar-nav-link c-sidebar-nav-dropdown-toggle" href="#">
@@ -150,30 +172,6 @@
             <li class="c-sidebar-nav-item">
                 <a class="c-sidebar-nav-link {{ request()->routeIs('sales.index') ? 'c-active' : '' }}" href="{{ route('sales.index') }}">
                     <i class="c-sidebar-nav-icon bi bi-journals" style="line-height: 1;"></i> All Sales
-                </a>
-            </li>
-        </ul>
-    </li>
-@endcan
-
-@can('access_sale_returns')
-    <li class="c-sidebar-nav-item c-sidebar-nav-dropdown {{ request()->routeIs('sale-returns.*') || request()->routeIs('sale-return-payments.*') ? 'c-show' : '' }}">
-        <a class="c-sidebar-nav-link c-sidebar-nav-dropdown-toggle" href="#">
-            <i class="c-sidebar-nav-icon bi bi-arrow-return-left" style="line-height: 1;"></i> Sale Returns
-        </a>
-        @can('create_sale_returns')
-            <ul class="c-sidebar-nav-dropdown-items">
-                <li class="c-sidebar-nav-item">
-                    <a class="c-sidebar-nav-link {{ request()->routeIs('sale-returns.create') ? 'c-active' : '' }}" href="{{ route('sale-returns.create') }}">
-                        <i class="c-sidebar-nav-icon bi bi-journal-plus" style="line-height: 1;"></i> Create Sale Return
-                    </a>
-                </li>
-            </ul>
-        @endcan
-        <ul class="c-sidebar-nav-dropdown-items">
-            <li class="c-sidebar-nav-item">
-                <a class="c-sidebar-nav-link {{ request()->routeIs('sale-returns.index') ? 'c-active' : '' }}" href="{{ route('sale-returns.index') }}">
-                    <i class="c-sidebar-nav-icon bi bi-journals" style="line-height: 1;"></i> All Sale Returns
                 </a>
             </li>
         </ul>

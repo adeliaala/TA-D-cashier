@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use App\Models\Branch;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
@@ -16,6 +17,10 @@ class SuperUserSeeder extends Seeder
      */
     public function run()
     {
+        // Get default branch
+        $branch = Branch::where('name', 'Toko Al Fatih Pusat')->first();
+
+        // Create super admin user
         $user = User::create([
             'name' => 'Administrator',
             'email' => 'super.admin@test.com',
@@ -23,10 +28,14 @@ class SuperUserSeeder extends Seeder
             'is_active' => 1
         ]);
 
+        // Create and assign Super Admin role
         $superAdmin = Role::create([
             'name' => 'Super Admin'
         ]);
 
         $user->assignRole($superAdmin);
+
+        // Attach user to branch
+        $user->branches()->attach($branch->id);
     }
 }
