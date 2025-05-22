@@ -1,0 +1,11 @@
+{
+    "name": "StockTransfer",
+    "alias": "stocktransfer",
+    "description": "Stock Transfer Module",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\StockTransfer\\Providers\\StockTransferServiceProvider"
+    ],
+    "files": []
+}

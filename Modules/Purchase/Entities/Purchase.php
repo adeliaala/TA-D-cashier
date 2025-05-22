@@ -6,33 +6,35 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Log;
 
 class Purchase extends Model
 {
     use HasFactory;
 
     protected $fillable = [
+        'branch_id',
+        'user_id',
+        'date',
         'reference_no',
         'supplier_id',
-        'date',
-        'discount_amount',
-        'payment_method',
+        'discount_percentage',
+        'discount',
+        'total',
         'paid_amount',
-        'total_amount',
         'due_amount',
         'payment_status',
-        'user_id',
-        'branch_id',
-        'created_by',
-        'updated_by'
+        'payment_method',
+        'note',
     ];
 
     protected $casts = [
         'date' => 'date',
+        'discount_percentage' => 'float',
+        'discount' => 'decimal:2',
+        'total' => 'decimal:2',
         'paid_amount' => 'decimal:2',
-        'total_amount' => 'decimal:2',
-        'due_amount' => 'decimal:2',
-        'discount_amount' => 'decimal:2'
+        'due_amount' => 'decimal:2'
     ];
 
     public function purchaseDetails(): HasMany
@@ -42,7 +44,7 @@ class Purchase extends Model
 
     public function supplier(): BelongsTo
     {
-        return $this->belongsTo('Modules\People\Entities\Supplier');
+        return $this->belongsTo('Modules\People\Entities\Supplier', 'supplier_id');
     }
 
     public function user(): BelongsTo
@@ -66,17 +68,31 @@ class Purchase extends Model
             $number = Purchase::max('id') + 1;
             $model->reference_no = make_reference_id('PR', $number);
         });
+        
+        // Log when model is retrieved
+        static::retrieved(function ($model) {
+            Log::info('Purchase Model Retrieved', [
+                'id' => $model->id,
+                'reference_no' => $model->reference_no,
+                'supplier_id' => $model->supplier_id,
+                'payment_status' => $model->payment_status
+            ]);
+        });
     }
 
     public function scopeCompleted($query) {
         return $query->where('payment_status', 'Paid');
     }
 
-    public function getPaidAmountAttribute($value) {
+    public function getDiscountAttribute($value) {
         return $value / 100;
     }
 
-    public function getTotalAmountAttribute($value) {
+    public function getTotalAttribute($value) {
+        return $value / 100;
+    }
+
+    public function getPaidAmountAttribute($value) {
         return $value / 100;
     }
 
@@ -84,7 +100,19 @@ class Purchase extends Model
         return $value / 100;
     }
 
-    public function getDiscountAmountAttribute($value) {
-        return $value / 100;
+    public function setDiscountAttribute($value) {
+        $this->attributes['discount'] = $value * 100;
+    }
+
+    public function setTotalAttribute($value) {
+        $this->attributes['total'] = $value * 100;
+    }
+
+    public function setPaidAmountAttribute($value) {
+        $this->attributes['paid_amount'] = $value * 100;
+    }
+
+    public function setDueAmountAttribute($value) {
+        $this->attributes['due_amount'] = $value * 100;
     }
 }

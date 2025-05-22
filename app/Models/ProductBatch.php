@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
+use Modules\Product\Entities\Product;
 
 class ProductBatch extends Model
 {
@@ -12,14 +13,17 @@ class ProductBatch extends Model
         'product_id',
         'branch_id',
         'batch_code',
-        'quantity',
-        'purchase_price',
-        'expired_date',
+        'qty',
+        'unit_price',
+        'exp_date',
+        'purchase_id',
+        'created_by',
+        'updated_by'
     ];
 
     protected $casts = [
-        'expired_date' => 'date',
-        'purchase_price' => 'decimal:2',
+        'exp_date' => 'date',
+        'unit_price' => 'decimal:2',
     ];
 
     public function product(): BelongsTo
@@ -47,8 +51,8 @@ class ProductBatch extends Model
     {
         return self::where('product_id', $productId)
             ->where('branch_id', $branchId)
-            ->where('quantity', '>', 0)
-            ->orderBy('expired_date', 'asc')
+            ->where('qty', '>', 0)
+            ->orderBy('exp_date', 'asc')
             ->orderBy('created_at', 'asc')
             ->get();
     }
@@ -65,15 +69,15 @@ class ProductBatch extends Model
         foreach ($batches as $batch) {
             if ($remainingQuantity <= 0) break;
 
-            $deductAmount = min($remainingQuantity, $batch->quantity);
-            $batch->quantity -= $deductAmount;
+            $deductAmount = min($remainingQuantity, $batch->qty);
+            $batch->qty -= $deductAmount;
             $batch->save();
 
             $usedBatches[] = [
                 'batch_id' => $batch->id,
-                'quantity' => $deductAmount,
-                'purchase_price' => $batch->purchase_price,
-                'expired_date' => $batch->expired_date
+                'qty' => $deductAmount,
+                'unit_price' => $batch->unit_price,
+                'exp_date' => $batch->exp_date
             ];
 
             $remainingQuantity -= $deductAmount;
@@ -91,6 +95,18 @@ class ProductBatch extends Model
      */
     public static function addStock(array $data)
     {
+        // Rename expired_date to exp_date if it exists
+        if (isset($data['expired_date'])) {
+            $data['exp_date'] = $data['expired_date'];
+            unset($data['expired_date']);
+        }
+        
+        // Rename purchase_price to unit_price if it exists
+        if (isset($data['purchase_price'])) {
+            $data['unit_price'] = $data['purchase_price'];
+            unset($data['purchase_price']);
+        }
+
         // Generate batch code if not provided
         if (!isset($data['batch_code'])) {
             $data['batch_code'] = self::generateBatchCode();

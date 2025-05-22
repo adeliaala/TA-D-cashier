@@ -7,8 +7,8 @@ use Modules\People\Entities\Supplier;
 use Modules\Product\Entities\Product;
 use Modules\Purchase\Entities\Purchase;
 use Modules\Purchase\Entities\PurchaseDetail;
-use Modules\Purchase\Entities\PurchasePayment;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class CreatePurchase extends Component
@@ -127,85 +127,110 @@ class CreatePurchase extends Component
 
     public function save()
     {
-        $this->validate();
-
         try {
+            $this->validate();
+
+            // Log session variables
+            Log::info("CreatePurchase: Session variables", [
+                'branch_id' => session('branch_id'),
+                'active_branch' => session('active_branch'),
+                'all_session' => session()->all()
+            ]);
+            
+            // Log bahwa validasi berhasil
+            Log::info("CreatePurchase: Validation successful", [
+                'supplier_id' => $this->supplier_id,
+                'reference_no' => $this->reference_no,
+                'items_count' => count($this->items)
+            ]);
+
             DB::beginTransaction();
 
             $supplier = Supplier::findOrFail($this->supplier_id);
+            Log::info("CreatePurchase: Supplier found", ['supplier' => $supplier->toArray()]);
 
             $purchase = Purchase::create([
-                'branch_id' => session('branch_id'),
+                'branch_id' => session('branch_id') ?? session('active_branch') ?? 1,
                 'user_id' => auth()->id(),
                 'date' => $this->date,
                 'reference_no' => $this->reference_no,
                 'supplier_id' => $this->supplier_id,
-                'supplier_name' => $supplier->supplier_name,
-                'discount_percentage' => $this->discount_percentage,
-                'discount' => $this->discount,
-                'total' => $this->total_amount,
-                'paid_amount' => $this->paid_amount,
-                'due_amount' => $this->due_amount,
+                'discount_percentage' => $this->discount_percentage ?? 0,
+                'discount' => $this->discount ?? 0,
+                'total' => $this->total_amount ?? 0,
+                'paid_amount' => $this->paid_amount ?? 0,
+                'due_amount' => $this->due_amount ?? 0,
                 'payment_status' => ($this->paid_amount >= $this->total_after_discount) ? 'paid' : 'due',
                 'payment_method' => $this->payment_method,
                 'note' => $this->note,
             ]);
+            
+            Log::info("CreatePurchase: Purchase created", ['purchase' => $purchase->toArray()]);
 
             // Save purchase items and update product quantities
-            foreach ($this->items as $item) {
+            foreach ($this->items as $index => $item) {
+                Log::info("CreatePurchase: Processing item", ['index' => $index, 'item' => $item]);
+                
                 $product = Product::findOrFail($item['product_id']);
+                Log::info("CreatePurchase: Product found", ['product' => $product->toArray()]);
                 
                 // Create purchase detail
-                PurchaseDetail::create([
+                $purchaseDetail = PurchaseDetail::create([
                     'purchase_id' => $purchase->id,
                     'product_id' => $item['product_id'],
                     'product_name' => $product->product_name,
-                    'product_code' => $product->product_code,
+                    // 'product_code' => $product->product_code,
                     'qty' => $item['qty'],
-                    'purchase_price' => $item['purchase_price'],
+                    // 'price' => $item['purchase_price'],
                     'unit_price' => $item['unit_price'],
                     'subtotal' => $item['qty'] * $item['unit_price'],
                     'product_discount_amount' => $item['discount'] ?? 0,
                     'product_discount_type' => $item['discount_type'] ?? null,
                     'product_tax_amount' => $item['tax'] ?? 0,
                 ]);
-
-                // Update product quantity
-                $product->update([
-                    'product_quantity' => $product->product_quantity + $item['qty']
-                ]);
+                
+                Log::info("CreatePurchase: Purchase detail created", ['purchaseDetail' => $purchaseDetail->toArray()]);
 
                 // Create or update product batch
+                $batchData = [
+                    'product_id' => $item['product_id'],
+                    'branch_id' => session('branch_id') ?? session('active_branch') ?? 1,
+                    'batch_code' => $this->reference_no . '-' . $item['product_id'],
+                    'qty' => $item['qty'],
+                    'unit_price' => $item['purchase_price'],
+                    'exp_date' => null,
+                    'purchase_id' => $purchase->id,
+                    'created_by' => auth()->user()->name ?? 'system',
+                    'updated_by' => auth()->user()->name ?? 'system',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+                
+                Log::info("CreatePurchase: Inserting batch", ['batchData' => $batchData]);
+                
                 DB::table('product_batches')->updateOrInsert(
                     [
                         'product_id' => $item['product_id'],
-                        'batch_number' => $this->reference_no,
+                        'batch_code' => $this->reference_no . '-' . $item['product_id'],
                     ],
-                    [
-                        'product_id' => $item['product_id'],
-                        'batch_number' => $this->reference_no,
-                        'qty' => $item['qty'],
-                        'expiry_date' => null,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]
+                    $batchData
                 );
+                
+                Log::info("CreatePurchase: Batch inserted/updated successfully");
             }
 
             // Create purchase payment if there's a paid amount
             if ($this->paid_amount > 0) {
-                PurchasePayment::create([
-                    'branch_id' => session('branch_id'),
+                // Hanya catat informasi pembayaran di log
+                Log::info("CreatePurchase: Payment info (not saved to DB)", [
                     'purchase_id' => $purchase->id,
                     'amount' => $this->paid_amount,
-                    'date' => now(),
-                    'reference' => 'PAY-' . strtoupper(Str::random(6)),
-                    'payment_method' => $this->payment_method,
-                    'note' => $this->note,
+                    'payment_method' => $this->payment_method
                 ]);
             }
 
             DB::commit();
+            Log::info("CreatePurchase: Transaction committed successfully");
 
             $this->dispatch('showSuccessMessage', [
                 'message' => 'Purchase created successfully!',
@@ -214,10 +239,20 @@ class CreatePurchase extends Component
 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error("CreatePurchase: Error creating purchase", [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             $this->dispatch('showErrorMessage', [
                 'message' => 'Error creating purchase: ' . $e->getMessage()
             ]);
         }
+        
+        // Dispatch debug event untuk front-end
+        $this->dispatch('debug', [
+            'message' => 'Purchase process completed, check console logs'
+        ]);
     }
 
     public function render()

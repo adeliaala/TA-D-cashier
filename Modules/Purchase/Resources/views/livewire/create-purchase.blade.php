@@ -3,6 +3,7 @@
     document.addEventListener('livewire:init', function () {
         // Success Message
         Livewire.on('showSuccessMessage', function(data) {
+            console.log('Success message received:', data);
             Swal.fire({
                 title: 'Success!',
                 text: data.message,
@@ -17,6 +18,7 @@
 
         // Error Message
         Livewire.on('showErrorMessage', function(data) {
+            console.log('Error message received:', data);
             Swal.fire({
                 title: 'Error!',
                 text: data.message,
@@ -27,6 +29,7 @@
 
         // Confirmation Dialog
         Livewire.on('showConfirmDialog', function(data) {
+            console.log('Confirmation dialog received:', data);
             Swal.fire({
                 title: data.title,
                 text: data.text,
@@ -42,6 +45,24 @@
                 }
             });
         });
+        
+        // Debug Event
+        Livewire.on('debug', function(data) {
+            console.log('DEBUG EVENT:', data);
+        });
+    });
+    
+    // Debug form submission
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form[wire\\:submit\\.prevent="save"]');
+        if (form) {
+            console.log('Form found, adding submit event listener');
+            form.addEventListener('submit', function(e) {
+                console.log('Form submit event triggered');
+            });
+        } else {
+            console.error('Form not found!');
+        }
     });
 </script>
 @endpush

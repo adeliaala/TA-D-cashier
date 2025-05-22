@@ -1,6 +1,7 @@
 <?php
 
 use Modules\Setting\Entities\Setting;
+use Illuminate\Support\Facades\Log;
 
 if (!function_exists('settings')) {
     function settings()
@@ -12,8 +13,25 @@ if (!function_exists('settings')) {
 if (!function_exists('format_currency')) {
     function format_currency($price)
     {
-        $settings = settings();
-        return $settings->currency->symbol . ' ' . number_format($price, 0, $settings->currency->decimal_separator, $settings->currency->thousand_separator) . ',-';
+        try {
+            $settings = settings();
+            Log::info('Format Currency', [
+                'price' => $price,
+                'currency_symbol' => $settings->currency->symbol ?? 'Rp'
+            ]);
+            
+            if (!isset($settings->currency)) {
+                return 'Rp ' . number_format($price, 0, ',', '.') . ',-';
+            }
+            
+            return $settings->currency->symbol . ' ' . number_format($price, 0, $settings->currency->decimal_separator, $settings->currency->thousand_separator) . ',-';
+        } catch (\Exception $e) {
+            Log::error('Error in format_currency', [
+                'price' => $price,
+                'error' => $e->getMessage()
+            ]);
+            return 'Rp ' . number_format($price, 0, ',', '.') . ',-';
+        }
     }
 }
 

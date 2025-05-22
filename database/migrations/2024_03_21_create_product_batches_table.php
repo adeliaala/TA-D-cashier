@@ -14,7 +14,7 @@ return new class extends Migration
             $table->foreignId('branch_id')->constrained('branches')->onDelete('cascade');
             $table->string('batch_code')->nullable();
             $table->integer('quantity');
-            $table->decimal('purchase_price', 10, 2);
+            $table->decimal('unit_price', 10, 2);
             $table->date('expired_date')->nullable();
             $table->timestamps();
 

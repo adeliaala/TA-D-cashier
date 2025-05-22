@@ -13,7 +13,6 @@
     </button>
 </div>
 
-@push('scripts')
 <script>
     function deletePurchase(id) {
         if (confirm('Are you sure you want to delete this purchase?')) {
@@ -38,4 +37,3 @@
         }
     }
 </script>
-@endpush

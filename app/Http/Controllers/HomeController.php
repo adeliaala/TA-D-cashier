@@ -7,8 +7,6 @@ use Illuminate\Support\Facades\DB;
 use Modules\Expense\Entities\Expense;
 use Modules\Purchase\Entities\Purchase;
 use Modules\Purchase\Entities\PurchasePayment;
-use Modules\PurchasesReturn\Entities\PurchaseReturn;
-use Modules\PurchasesReturn\Entities\PurchaseReturnPayment;
 use Modules\Sale\Entities\Sale;
 use Modules\Sale\Entities\SalePayment;
 
@@ -35,10 +33,6 @@ class HomeController extends Controller
             ->where('branch_id', $activeBranchId)
             ->sum('total_amount');
             
-        $purchase_returns = PurchaseReturn::where('payment_status', 'Completed')
-            ->where('branch_id', $activeBranchId)
-            ->sum('total_amount');
-            
         $product_costs = 0;
 
         foreach (Sale::where('payment_status', 'Completed')
@@ -55,12 +49,10 @@ class HomeController extends Controller
         $profit = $revenue - $product_costs;
 
         return view('home', [
-            'revenue'          => $revenue,
-            'purchase_returns' => $purchase_returns / 100,
-            'profit'           => $profit
+            'revenue' => $revenue,
+            'profit'  => $profit
         ]);
     }
-
 
     public function currentMonthChart() {
         abort_if(!request()->ajax(), 404);
@@ -91,7 +83,6 @@ class HomeController extends Controller
         ]);
     }
 
-
     public function salesPurchasesChart() {
         abort_if(!request()->ajax(), 404);
 
@@ -102,7 +93,6 @@ class HomeController extends Controller
 
         return response()->json(['sales' => $sales, 'purchases' => $purchases]);
     }
-
 
     public function paymentChart() {
         abort_if(!request()->ajax(), 404);
@@ -127,15 +117,6 @@ class HomeController extends Controller
             ->get()->pluck('amount', 'month');
 
         $purchase_payments = PurchasePayment::where('date', '>=', $date_range)
-            ->where('branch_id', $activeBranchId)
-            ->select([
-                DB::raw("DATE_FORMAT(date, '%m-%Y') as month"),
-                DB::raw("SUM(amount) as amount")
-            ])
-            ->groupBy('month')->orderBy('month')
-            ->get()->pluck('amount', 'month');
-
-        $purchase_return_payments = PurchaseReturnPayment::where('date', '>=', $date_range)
             ->where('branch_id', $activeBranchId)
             ->select([
                 DB::raw("DATE_FORMAT(date, '%m-%Y') as month"),
@@ -198,21 +179,23 @@ class HomeController extends Controller
             ->get([
                 DB::raw(DB::raw("DATE_FORMAT(date,'%d-%m-%y') as date")),
                 DB::raw('SUM(total_amount) AS count'),
-            ])
-            ->pluck('count', 'date');
+            ])->pluck('count', 'date');
 
         $dates = $dates->merge($sales);
 
         $data = [];
-        $days = [];
+        $labels = [];
+
         foreach ($dates as $key => $value) {
             $data[] = $value / 100;
-            $days[] = $key;
+            $labels[] = $key;
         }
 
-        return response()->json(['data' => $data, 'days' => $days]);
+        return [
+            'data' => $data,
+            'labels' => $labels,
+        ];
     }
-
 
     public function purchasesChartData() {
         $activeBranchId = session('active_branch_id') ?? 1;
@@ -233,19 +216,21 @@ class HomeController extends Controller
             ->get([
                 DB::raw(DB::raw("DATE_FORMAT(date,'%d-%m-%y') as date")),
                 DB::raw('SUM(total_amount) AS count'),
-            ])
-            ->pluck('count', 'date');
+            ])->pluck('count', 'date');
 
         $dates = $dates->merge($purchases);
 
         $data = [];
-        $days = [];
+        $labels = [];
+
         foreach ($dates as $key => $value) {
             $data[] = $value / 100;
-            $days[] = $key;
+            $labels[] = $key;
         }
 
-        return response()->json(['data' => $data, 'days' => $days]);
-
+        return [
+            'data' => $data,
+            'labels' => $labels,
+        ];
     }
 }

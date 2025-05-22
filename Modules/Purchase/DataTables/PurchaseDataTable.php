@@ -8,42 +8,87 @@ use Yajra\DataTables\Html\Column;
 use Yajra\DataTables\Html\Editor\Editor;
 use Yajra\DataTables\Html\Editor\Fields;
 use Yajra\DataTables\Services\DataTable;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class PurchaseDataTable extends DataTable
 {
     public function dataTable($query)
     {
+        Log::info('PurchaseDataTable::dataTable called', [
+            'query_type' => get_class($query)
+        ]);
+        
+        // Gunakan query builder DB langsung untuk memastikan data diambil
+        $purchases = DB::table('purchases')
+            ->select([
+                'purchases.id',
+                'purchases.date',
+                'purchases.reference_no',
+                'purchases.supplier_id',
+                'purchases.total',
+                'purchases.paid_amount',
+                'purchases.due_amount',
+                'purchases.payment_status',
+                'suppliers.name as supplier_name'
+            ])
+            ->leftJoin('suppliers', 'purchases.supplier_id', '=', 'suppliers.id')
+            ->get();
+        
+        Log::info('Direct DB Query Results', [
+            'count' => $purchases->count(),
+            'data' => $purchases->take(3)->toArray()
+        ]);
+        
         return datatables()
-            ->eloquent($query)
+            ->of($purchases)
             ->addColumn('action', function ($data) {
                 return view('purchase::partials.actions', [
                     'id' => $data->id
                 ]);
             })
-            ->editColumn('total_amount', function ($data) {
-                return format_currency($data->total_amount);
+            ->editColumn('total', function ($data) {
+                return format_currency($data->total / 100);
             })
             ->editColumn('paid_amount', function ($data) {
-                return format_currency($data->paid_amount);
+                return format_currency($data->paid_amount / 100);
             })
             ->editColumn('due_amount', function ($data) {
-                return format_currency($data->due_amount);
-            })
-            ->editColumn('status', function ($data) {
-                return view('purchase::partials.status', [
-                    'status' => $data->status
-                ]);
+                return format_currency($data->due_amount / 100);
             })
             ->editColumn('payment_status', function ($data) {
                 return view('purchase::partials.payment-status', [
                     'payment_status' => $data->payment_status
                 ]);
-            });
+            })
+            ->rawColumns(['action', 'payment_status']);
     }
 
     public function query(Purchase $model)
     {
-        return $model->newQuery();
+        // Cek semua data purchase yang ada
+        $allPurchases = DB::table('purchases')->get();
+        Log::info('All Purchases from DB', [
+            'count' => $allPurchases->count(),
+            'data' => $allPurchases->take(3)->toArray()
+        ]);
+        
+        // Periksa struktur tabel
+        $columns = DB::getSchemaBuilder()->getColumnListing('purchases');
+        Log::info('Purchases Table Columns', [
+            'columns' => $columns
+        ]);
+        
+        $activeBranch = session('active_branch');
+        
+        Log::info('Active Branch', [
+            'branch_id' => $activeBranch
+        ]);
+        
+        // Kita tidak menggunakan query ini karena menggunakan DB query langsung di dataTable()
+        $query = $model->newQuery();
+        
+        return $query;
     }
 
     public function html()
@@ -79,7 +124,7 @@ class PurchaseDataTable extends DataTable
                 ->title('Date')
                 ->className('text-center align-middle'),
 
-            Column::make('reference')
+            Column::make('reference_no')
                 ->title('Reference')
                 ->className('text-center align-middle'),
 
@@ -87,15 +132,11 @@ class PurchaseDataTable extends DataTable
                 ->title('Supplier')
                 ->className('text-center align-middle'),
 
-            Column::make('status')
-                ->title('Status')
-                ->className('text-center align-middle'),
-
             Column::make('payment_status')
                 ->title('Payment Status')
                 ->className('text-center align-middle'),
 
-            Column::make('total_amount')
+            Column::make('total')
                 ->title('Total')
                 ->className('text-center align-middle'),
 

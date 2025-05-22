@@ -14,5 +14,6 @@
     "PurchasesReturn": true,
     "Quotation": true,
     "Reports": true,
-    "Branch": true
+    "Branch": true,
+    "StockTransfer": true
 }

@@ -15,12 +15,12 @@ class ProductDataTable extends DataTable
     public function dataTable($query)
     {
         return datatables()
-            ->eloquent($query)
+            ->query($query)
             ->addColumn('action', function ($data) {
                 return view('product::products.partials.actions', compact('data'));
             })
             ->addColumn('product_image', function ($data) {
-                $url = $data->getFirstMediaUrl('images');
+                $url = Product::find($data->id)->getFirstMediaUrl('images');
                 return '<img src="'.$url.'" class="product-img-thumb" alt="">';
             })
             ->addColumn('product_name', function ($data) {
@@ -34,10 +34,26 @@ class ProductDataTable extends DataTable
 
     public function query(Product $model)
     {
-        return $model->newQuery()
-            ->with('category')
-            ->leftJoin(DB::raw('(SELECT product_id, SUM(quantity) as total_quantity FROM product_batches GROUP BY product_id) as pb'), 'products.id', '=', 'pb.product_id')
-            ->select('products.*', DB::raw('COALESCE(pb.total_quantity, 0) as product_quantity'));
+        $products = DB::table('products')
+            ->leftJoinSub(
+                DB::table('product_batches')
+                    ->select('product_id', DB::raw('SUM(qty) as total_quantity'))
+                    ->groupBy('product_id'),
+                'pb',
+                'products.id',
+                '=',
+                'pb.product_id'
+            )
+            ->select(
+                'products.id',
+                'products.product_name',
+                'products.product_code',
+                'products.product_unit',
+                'products.category_id',
+                DB::raw('COALESCE(pb.total_quantity, 0) as product_quantity')
+            );
+
+        return $products;
     }
 
     public function html()
@@ -77,9 +93,9 @@ class ProductDataTable extends DataTable
                 ->title('Code')
                 ->className('text-center align-middle'),
 
-            Column::make('category.category_name')
-                ->title('Category')
-                ->className('text-center align-middle'),
+            // Column::make('category.category_name')
+            //     ->title('Category')
+            //     ->className('text-center align-middle'),
 
             Column::make('product_unit')
                 ->title('Unit')

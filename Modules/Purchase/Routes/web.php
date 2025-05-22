@@ -29,7 +29,8 @@ Route::middleware(['web', 'auth'])->group(function () {
         Route::get('/stock/{productId}/{branchId}', [PurchaseController::class, 'getStock'])->name('purchases.stock');
     });
 
-    // Purchase Payments
+    // Purchase Payments - dinonaktifkan karena tabel sudah dihapus
+    /*
     Route::prefix('purchase-payments')->group(function () {
         Route::get('/{purchase_id}', 'PurchasePaymentsController@index')->name('purchase-payments.index');
         Route::get('/{purchase_id}/create', 'PurchasePaymentsController@create')->name('purchase-payments.create');
@@ -38,6 +39,7 @@ Route::middleware(['web', 'auth'])->group(function () {
         Route::patch('/update/{purchasePayment}', 'PurchasePaymentsController@update')->name('purchase-payments.update');
         Route::delete('/destroy/{purchasePayment}', 'PurchasePaymentsController@destroy')->name('purchase-payments.destroy');
     });
+    */
 
     // Livewire Routes
     Route::get('/purchases/create', function () {

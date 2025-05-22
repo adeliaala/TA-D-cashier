@@ -1,13 +1,13 @@
-@if ($data->payment_status == 'Partial')
+@if (strtolower($payment_status) == 'partial')
     <span class="badge badge-warning">
-        {{ $data->payment_status }}
+        Partial
     </span>
-@elseif ($data->payment_status == 'Paid')
+@elseif (strtolower($payment_status) == 'paid')
     <span class="badge badge-success">
-        {{ $data->payment_status }}
+        Paid
     </span>
 @else
     <span class="badge badge-danger">
-        {{ $data->payment_status }}
+        {{ $payment_status ?? 'Unpaid' }}
     </span>
 @endif

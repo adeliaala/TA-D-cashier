@@ -11,19 +11,63 @@ use Modules\People\Entities\Supplier;
 use Modules\Product\Entities\Product;
 use Modules\Purchase\Entities\Purchase;
 use Modules\Purchase\Entities\PurchaseDetail;
-use Modules\Purchase\Entities\PurchasePayment;
 use Modules\Purchase\Http\Requests\StorePurchaseRequest;
 use Modules\Purchase\Http\Requests\UpdatePurchaseRequest;
 use App\Models\ProductBatch;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Log;
 
 class PurchaseController extends Controller
 {
 
     public function index(PurchaseDataTable $dataTable) {
         abort_if(Gate::denies('access_purchases'), 403);
+
+        // Log untuk debugging
+        Log::info('PurchaseController@index called', [
+            'active_branch' => session('active_branch'),
+            'user' => auth()->user()->name ?? 'Unknown'
+        ]);
+        
+        // Periksa data purchases secara langsung
+        $purchases = DB::table('purchases')->get();
+        Log::info('Direct Purchase Query', [
+            'count' => $purchases->count(),
+            'data' => $purchases->take(3)->toArray()
+        ]);
+        
+        // Jika tidak ada data di DataTable, tampilkan data langsung dari DB
+        if ($purchases->count() > 0 && request()->ajax()) {
+            Log::info('Returning direct data for AJAX request');
+            return datatables()
+                ->of($purchases)
+                ->addColumn('action', function ($data) {
+                    return view('purchase::partials.actions', [
+                        'id' => $data->id
+                    ])->render();
+                })
+                ->addColumn('supplier_name', function ($data) {
+                    $supplier = DB::table('suppliers')->where('id', $data->supplier_id)->first();
+                    return $supplier ? $supplier->name : 'N/A';
+                })
+                ->editColumn('total', function ($data) {
+                    return format_currency($data->total / 100);
+                })
+                ->editColumn('paid_amount', function ($data) {
+                    return format_currency($data->paid_amount / 100);
+                })
+                ->editColumn('due_amount', function ($data) {
+                    return format_currency($data->due_amount / 100);
+                })
+                ->editColumn('payment_status', function ($data) {
+                    return view('purchase::partials.payment-status', [
+                        'payment_status' => $data->payment_status
+                    ])->render();
+                })
+                ->rawColumns(['action', 'payment_status'])
+                ->make(true);
+        }
 
         return $dataTable->render('purchase::index');
     }
@@ -36,129 +80,148 @@ class PurchaseController extends Controller
 
 
     public function store(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'reference_no' => 'required|string',
-            'supplier_id' => 'required|exists:suppliers,id',
-            'date' => 'required|date',
-            'payment_method' => 'required|string',
-            'paid_amount' => 'required|numeric|min:0',
-            'products' => 'required|array|min:1',
-            'products.*.product_id' => 'required|exists:products,id',
-            'products.*.quantity' => 'required|integer|min:1',
-            'products.*.purchase_price' => 'required|numeric|min:0',
-            'products.*.expired_date' => 'nullable|date|after:today',
-            'discount_percentage' => 'nullable|numeric|min:0',
-            'discount_amount' => 'nullable|numeric|min:0',
-            'note' => 'nullable|string'
-        ]);
+{
+    $validator = Validator::make($request->all(), [
+        'reference_no' => 'required|string',
+        'supplier_id' => 'required|exists:suppliers,id',
+        'date' => 'required|date',
+        'payment_method' => 'required|string',
+        'paid_amount' => 'required|numeric|min:0',
+        'products' => 'required|array|min:1',
+        'products.*.product_id' => 'required|exists:products,id',
+        'products.*.qty' => 'required|integer|min:1',
+        'products.*.purchase_price' => 'required|numeric|min:0',
+        'products.*.expired_date' => 'nullable|date|after:today',
+        'discount_percentage' => 'nullable|numeric|min:0',
+        'discount_amount' => 'nullable|numeric|min:0',
+        'note' => 'nullable|string'
+    ]);
 
-        if ($validator->fails()) {
+    if ($validator->fails()) {
+        return response()->json([
+            'message' => 'Validation failed',
+            'errors' => $validator->errors()
+        ], 422);
+    }
+
+    DB::beginTransaction();
+    try {
+        // Log request data
+        Log::info("Request Data", $request->all());
+
+        // Calculate total amount
+        $totalAmount = collect($request->products)->sum(function ($product) {
+            return $product['qty'] * $product['purchase_price'];
+        });
+
+        // Calculate due amount
+        $dueAmount = $totalAmount - $request->paid_amount;
+
+        // Determine payment status
+        $paymentStatus = $request->paid_amount == 0 ? 'Unpaid' : 
+                       ($dueAmount == 0 ? 'Paid' : 'Partial');
+
+        // Check active branch
+        if (!session('active_branch')) {
             return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'message' => 'Branch not selected'
             ], 422);
         }
 
-        DB::beginTransaction();
+        // 1. Simpan ke purchases
+        $purchase = Purchase::create([
+            'reference_no' => $request->reference_no,
+            'supplier_id' => $request->supplier_id,
+            'date' => $request->date,
+            'discount_percentage' => $request->discount_percentage ?? 0,
+            'discount' => round($request->discount_amount * 100),
+            'payment_method' => $request->payment_method,
+            'paid_amount' => round($request->paid_amount * 100),
+            'total' => round($totalAmount * 100),
+            'due_amount' => round($dueAmount * 100),
+            'payment_status' => $paymentStatus,
+            'note' => $request->note,
+            'user_id' => auth()->id(),
+            'branch_id' => session('active_branch')
+        ]);
 
-        try {
-            // Calculate total amount
-            $totalAmount = collect($request->products)->sum(function ($product) {
-                return $product['quantity'] * $product['purchase_price'];
-            });
+        // Log purchase created
+        Log::info("Purchase Created", ['purchase' => $purchase->toArray()]);
 
-            // Calculate due amount
-            $dueAmount = $totalAmount - $request->paid_amount;
-
-            // Determine payment status
-            $paymentStatus = $request->paid_amount == 0 ? 'Unpaid' : 
-                           ($dueAmount == 0 ? 'Paid' : 'Partial');
-
-            // 1. Simpan ke purchases
-            $purchase = Purchase::create([
-                'reference_no' => $request->reference_no,
-                'supplier_id' => $request->supplier_id,
-                'supplier_name' => Supplier::findOrFail($request->supplier_id)->name,
-                'date' => $request->date,
-                'discount_percentage' => $request->discount_percentage ?? 0,
-                //'discount_amount' => $request->discount_amount ?? 0,
-                'payment_method' => $request->payment_method,
-                'paid_amount' => round($request->paid_amount * 100),
-                'total_amount' => round($totalAmount * 100),
-                'discount_amount' => round($request->discount_amount * 100),
-                'due_amount' => $dueAmount,
-                'payment_status' => $paymentStatus,
-                'note' => $request->note,
-                'user_id' => auth()->id(),
-                'branch_id' => session(['active_branch' => 1]),// contoh ID cabang default
-                'created_by' => auth()->user()->name,
-                'updated_by' => auth()->user()->name
+        // 2. Simpan detail produk & batch
+        foreach ($request->products as $product) {
+            // Detail
+            PurchaseDetail::create([
+                'purchase_id' => $purchase->id,
+                'product_id' => $product['product_id'],
+                'product_name' => Product::findOrFail($product['product_id'])->product_name,
+                'product_code' => Product::findOrFail($product['product_id'])->product_code,
+                'qty' => $product['qty'],
+                // 'price' => $product['purchase_price'],
+                'unit_price' => $product['purchase_price'],
+                'subtotal' => $product['qty'] * $product['purchase_price'],
+                'product_discount_amount' => 0,
+                'product_discount_type' => 'fixed',
+                'product_tax_amount' => 0
             ]);
 
-            // 2. Simpan detail produk & batch
-            foreach ($request->products as $product) {
-                // Detail
-                PurchaseDetail::create([
-                    'purchase_id' => $purchase->id,
-                    'product_id' => $product['product_id'],
-                    'product_name' => Product::findOrFail($product['product_id'])->product_name,
-                    'product_code' => Product::findOrFail($product['product_id'])->product_code,
-                    'quantity' => $product['quantity'],
-                    'price' => $product['purchase_price'],
-                    'unit_price' => $product['purchase_price'],
-                    'sub_total' => $product['quantity'] * $product['purchase_price'],
-                    'product_discount_amount' => 0,
-                    'product_discount_type' => 'fixed',
-                    'product_tax_amount' => 0,
-                    'created_by' => auth()->user()->name,
-                    'updated_by' => auth()->user()->name
-                ]);
-
-                // Batch
-                ProductBatch::addStock([
-                    'product_id' => $product['product_id'],
-                    'branch_id' => session(['active_branch' => 1]), // contoh ID cabang default,
-                    'quantity' => $product['quantity'],
-                    'purchase_price' => $product['purchase_price'],
-                    'expired_date' => $product['expired_date'],
-                    'purchase_id' => $purchase->id,
-                    'batch_code' => $purchase->reference_no . '-' . $product['product_id'],
-                    'created_by' => auth()->user()->name,
-                    'updated_by' => auth()->user()->name
-                ]);
-            }
-
-            // 3. Simpan pembayaran (jika ada)
-            if ($purchase->paid_amount > 0) {
-                PurchasePayment::create([
-                    'purchase_id' => $purchase->id,
-                    'branch_id' => session(['active_branch' => 1]), // contoh ID cabang default,
-                    'amount' => $purchase->paid_amount,
-                    'date' => $purchase->date,
-                    'reference' => 'PAY-' . $purchase->reference_no,
-                    'payment_method' => $purchase->payment_method,
-                    'note' => 'Initial payment for purchase ' . $purchase->reference_no,
-                    'created_by' => auth()->user()->name,
-                    'updated_by' => auth()->user()->name
-                ]);
-            }
-
-            DB::commit();
-
-            return response()->json([
-                'message' => 'Purchase created successfully',
-                'data' => $purchase
-            ], 201);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'message' => 'Failed to create purchase',
-                'error' => $e->getMessage()
-            ], 500);
+            // Batch
+            ProductBatch::addStock([
+                'product_id' => $product['product_id'],
+                'branch_id' => session('active_branch'),
+                'qty' => $product['qty'],
+                'purchase_price' => $product['purchase_price'],
+                'exp_date' => $product['expired_date'],
+                'purchase_id' => $purchase->id,
+                'batch_code' => $purchase->reference_no . '-' . $product['product_id'],
+                'created_by' => auth()->user()->name ?? 'system',
+                'updated_by' => auth()->user()->name ?? 'system'
+            ]);
         }
+
+        // 3. Simpan pembayaran (jika ada)
+        if ($purchase->paid_amount > 0) {
+            // Kode ini dinonaktifkan karena tabel purchase_payments sudah dihapus
+            /*
+            PurchasePayment::create([
+                'purchase_id' => $purchase->id,
+                'branch_id' => session('active_branch'),
+                'amount' => $purchase->paid_amount,
+                'date' => $purchase->date,
+                'reference' => 'PAY-' . $purchase->reference_no,
+                'payment_method' => $purchase->payment_method,
+                'note' => 'Initial payment for purchase ' . $purchase->reference_no
+            ]);
+            */
+            
+            // Hanya catat di log
+            Log::info("Purchase Payment Info (not saved to DB)", [
+                'purchase_id' => $purchase->id,
+                'amount' => $purchase->paid_amount,
+                'payment_method' => $purchase->payment_method
+            ]);
+        }
+
+        DB::commit();
+
+        return response()->json([
+            'message' => 'Purchase created successfully',
+            'data' => $purchase
+        ], 201);
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error("Error Creating Purchase", [
+            'error' => $e->getMessage(),
+            'line' => $e->getLine(),
+            'file' => $e->getFile()
+        ]);
+
+        return response()->json([
+            'message' => 'Failed to create purchase',
+            'error' => $e->getMessage()
+        ], 500);
     }
+}
 
     public function getStock(Request $request, $productId, $branchId)
     {
@@ -197,7 +260,7 @@ class PurchaseController extends Controller
                 'options' => [
                     'product_discount' => $purchase_detail->product_discount_amount,
                     'product_discount_type' => $purchase_detail->product_discount_type,
-                    'sub_total'   => $purchase_detail->sub_total,
+                    'subtotal'   => $purchase_detail->subtotal,
                     'code'        => $purchase_detail->product_code,
                     'stock'       => Product::findOrFail($purchase_detail->product_id)->product_quantity,
                     'product_tax' => $purchase_detail->product_tax_amount,
@@ -225,7 +288,7 @@ class PurchaseController extends Controller
                 if ($purchase->status == 'Completed') {
                     $product = Product::findOrFail($purchase_detail->product_id);
                     $product->update([
-                        'product_quantity' => $product->product_quantity - $purchase_detail->quantity
+                        'product_quantity' => $product->product_quantity - $purchase_detail->qty
                     ]);
                 }
                 $purchase_detail->delete();
@@ -233,21 +296,16 @@ class PurchaseController extends Controller
 
             $purchase->update([
                 'date' => $request->date,
-                'reference' => $request->reference,
+                'reference_no' => $request->reference,
                 'supplier_id' => $request->supplier_id,
-                'supplier_name' => Supplier::findOrFail($request->supplier_id)->supplier_name,
-                'tax_percentage' => $request->tax_percentage,
                 'discount_percentage' => $request->discount_percentage,
-                'shipping_amount' => $request->shipping_amount * 100,
+                'discount' => $request->shipping_amount * 100,
                 'paid_amount' => $request->paid_amount * 100,
-                'total_amount' => $request->total_amount * 100,
+                'total' => $request->total_amount * 100,
                 'due_amount' => $due_amount * 100,
-                'status' => $request->status,
                 'payment_status' => $payment_status,
                 'payment_method' => $request->payment_method,
-                'note' => $request->note,
-                'tax_amount' => Cart::instance('purchase')->tax() * 100,
-                'discount_amount' => Cart::instance('purchase')->discount() * 100,
+                'note' => $request->note
             ]);
 
             foreach (Cart::instance('purchase')->content() as $cart_item) {
@@ -256,10 +314,10 @@ class PurchaseController extends Controller
                     'product_id' => $cart_item->id,
                     'product_name' => $cart_item->name,
                     'product_code' => $cart_item->options->code,
-                    'quantity' => $cart_item->qty,
+                    'qty' => $cart_item->qty,
                     'price' => $cart_item->price * 100,
-                    'unit_price' => $cart_item->options->unit_price * 100,
-                    'sub_total' => $cart_item->options->sub_total * 100,
+                    'unit_price' => $cart_item->price * 100,
+                    'subtotal' => $cart_item->options->subtotal * 100,
                     'product_discount_amount' => $cart_item->options->product_discount * 100,
                     'product_discount_type' => $cart_item->options->product_discount_type,
                     'product_tax_amount' => $cart_item->options->product_tax * 100,
@@ -297,11 +355,14 @@ class PurchaseController extends Controller
         $purchase = Purchase::findOrFail($id);
         $supplier = Supplier::findOrFail($purchase->supplier_id);
 
-        $pdf = PDF::loadView('purchase::print', [
-            'purchase' => $purchase,
-            'supplier' => $supplier,
-        ])->setPaper('a4');
+        // Menggunakan cara alternatif untuk membuat PDF
+        $pdf = app('dompdf.wrapper')
+            ->loadView('purchase::print', [
+                'purchase' => $purchase,
+                'supplier' => $supplier,
+            ])
+            ->setPaper('a4');
 
-        return $pdf->stream('purchase-'. $purchase->reference .'.pdf');
+        return $pdf->stream('purchase-'. $purchase->reference_no .'.pdf');
     }
 }

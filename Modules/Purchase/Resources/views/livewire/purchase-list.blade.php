@@ -59,11 +59,10 @@
                             <th>Reference</th>
                             <th>Date</th>
                             <th>Supplier</th>
-                            <th>Total Amount</th>
+                            <th>Total</th>
                             <th>Paid Amount</th>
                             <th>Due Amount</th>
                             <th>Payment Status</th>
-                            <th>Created By</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -73,15 +72,14 @@
                                 <td>{{ $purchase->reference_no }}</td>
                                 <td>{{ $purchase->date->format('d/m/Y') }}</td>
                                 <td>{{ $purchase->supplier->name }}</td>
-                                <td>{{ number_format($purchase->total_amount, 2) }}</td>
+                                <td>{{ number_format($purchase->total, 2) }}</td>
                                 <td>{{ number_format($purchase->paid_amount, 2) }}</td>
-                                <td>{{ $purchase->due_amount ? number_format($purchase->due_amount, 2) : '0.00' }}</td>
+                                <td>{{ number_format($purchase->due_amount, 2) }}</td>
                                 <td>
                                     <span class="badge badge-{{ $purchase->payment_status === 'Paid' ? 'success' : ($purchase->payment_status === 'Partial' ? 'warning' : 'danger') }}">
                                         {{ $purchase->payment_status }}
                                     </span>
                                 </td>
-                                <td>{{ $purchase->created_by }}</td>
                                 <td>
                                     <div class="btn-group">
                                         <a href="{{ route('purchases.show', $purchase->id) }}" class="btn btn-info btn-sm">
@@ -100,7 +98,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="9" class="text-center">No purchases found.</td>
+                                <td colspan="8" class="text-center">No purchases found.</td>
                             </tr>
                         @endforelse
                     </tbody>

@@ -10,6 +10,24 @@
 
 </ul>
 <ul class="c-header-nav ml-auto mr-4">
+    @can('access_branches')
+    <li class="c-header-nav-item mr-3">
+        <div class="dropdown">
+            <button class="btn btn-outline-primary btn-pill dropdown-toggle" type="button" id="branchDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="bi bi-building mr-1"></i> {{ auth()->user()->active_branch ? auth()->user()->active_branch->name : 'Pilih Cabang' }}
+            </button>
+            <div class="dropdown-menu" aria-labelledby="branchDropdown">
+                @foreach(\Modules\Branch\Entities\Branch::all() as $branch)
+                    <a class="dropdown-item {{ auth()->user()->active_branch && auth()->user()->active_branch->id === $branch->id ? 'active' : '' }}" 
+                       href="{{ route('branch.switch', $branch->id) }}">
+                        {{ $branch->name }}
+                    </a>
+                @endforeach
+            </div>
+        </div>
+    </li>
+    @endcan
+
     @can('create_pos_sales')
     <li class="c-header-nav-item mr-3">
         <a class="btn btn-primary btn-pill {{ request()->routeIs('app.pos.index') ? 'disabled' : '' }}" href="{{ route('app.pos.index') }}">
