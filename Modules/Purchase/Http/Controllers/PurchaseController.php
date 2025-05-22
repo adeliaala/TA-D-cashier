@@ -256,7 +256,7 @@ class PurchaseController extends Controller
             $cart->add([
                 'id'      => $purchase_detail->product_id,
                 'name'    => $purchase_detail->product_name,
-                'qty'     => $purchase_detail->quantity,
+                'qty'     => $purchase_detail->qty,
                 'unit_price'   => $purchase_detail->unit_price,
                 'weight'  => 1,
                 'options' => [
@@ -264,7 +264,7 @@ class PurchaseController extends Controller
                     'product_discount_type' => $purchase_detail->product_discount_type,
                     'subtotal'   => $purchase_detail->subtotal,
                     'code'        => $purchase_detail->product_code,
-                    'stock'       => Product::findOrFail($purchase_detail->product_id)->product_quantity,
+                    'stock'       => Product::findOrFail($purchase_detail->product_id)->product_qty,
                     'product_tax' => $purchase_detail->product_tax_amount,
                     'unit_price'  => $purchase_detail->unit_price
                 ]
@@ -290,7 +290,7 @@ class PurchaseController extends Controller
                 if ($purchase->status == 'Completed') {
                     $product = Product::findOrFail($purchase_detail->product_id);
                     $product->update([
-                        'product_quantity' => $product->product_quantity - $purchase_detail->qty
+                        'product_qty' => $product->product_qty - $purchase_detail->qty
                     ]);
                 }
                 $purchase_detail->delete();
@@ -328,7 +328,7 @@ class PurchaseController extends Controller
                 if ($request->status == 'Completed') {
                     $product = Product::findOrFail($cart_item->id);
                     $product->update([
-                        'product_quantity' => $product->product_quantity + $cart_item->qty
+                        'product_qty' => $product->product_qty + $cart_item->qty
                     ]);
                 }
             }

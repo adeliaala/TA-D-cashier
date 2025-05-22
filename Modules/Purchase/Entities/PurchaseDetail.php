@@ -15,18 +15,18 @@ class PurchaseDetail extends Model
         'purchase_id',
         'product_id',
         'product_name',
-        'quantity',
+        'qty',
         'unit_price',
         'price',
-        'sub_total',
+        'subtotal',
         'created_by',
         'updated_by'
     ];
 
     protected $casts = [
-        'quantity' => 'integer',
+        'qty' => 'integer',
         'price' => 'decimal:2',
-        'sub_total' => 'decimal:2'
+        'subtotal' => 'decimal:2'
     ];
 
     protected $with = ['product'];
