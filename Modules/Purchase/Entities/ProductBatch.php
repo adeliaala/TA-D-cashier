@@ -14,7 +14,8 @@ class ProductBatch extends Model
         'branch_id',
         'batch_code',
         'quantity',
-        'purchase_price',
+        'unit_price',
+        'price',
         'expired_date',
         'created_by',
         'updated_by'
@@ -22,7 +23,8 @@ class ProductBatch extends Model
 
     protected $casts = [
         'quantity' => 'integer',
-        'purchase_price' => 'decimal:2',
+        'unit_price' => 'decimal:2',
+        'price' => 'decimal:2',
         'expired_date' => 'date'
     ];
 
@@ -54,7 +56,8 @@ class ProductBatch extends Model
                 // Update existing batch
                 $batch->update([
                     'quantity' => $batch->quantity + $data['quantity'],
-                    'purchase_price' => $data['purchase_price'], // Update price to latest
+                    'unit_price' => $data['unit_price'], // Update price to latest
+                    'price' => $data['price'], // Update price to latest
                     'updated_by' => auth()->user()->name
                 ]);
                 return $batch;
@@ -66,7 +69,8 @@ class ProductBatch extends Model
                 'branch_id' => $data['branch_id'],
                 'batch_code' => $data['batch_code'] ?? null,
                 'quantity' => $data['quantity'],
-                'purchase_price' => $data['purchase_price'],
+                'unit_price' => $data['unit_price'],
+                'price' => $data['price'],
                 'expired_date' => $data['expired_date'],
                 'purchase_id' => $data['purchase_id'],
                 'created_by' => auth()->user()->name,

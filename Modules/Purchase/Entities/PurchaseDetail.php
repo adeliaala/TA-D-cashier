@@ -16,6 +16,7 @@ class PurchaseDetail extends Model
         'product_id',
         'product_name',
         'quantity',
+        'unit_price',
         'price',
         'sub_total',
         'created_by',

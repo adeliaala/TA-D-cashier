@@ -150,7 +150,7 @@
                                         <th>Product</th>
                                         <th>Quantity</th>
                                         <th>Purchase Price</th>
-                                        <th>Unit Price</th>
+                                        <th>Sell Price</th>
                                         <th>Discount</th>
                                         <th>Tax</th>
                                         <th>Subtotal</th>
@@ -173,13 +173,15 @@
                                                 <input type="number" class="form-control" wire:model="items.{{ $index }}.qty" min="1">
                                                 @error("items.{$index}.qty") <span class="text-danger">{{ $message }}</span> @enderror
                                             </td>
-                                            <td>
-                                                <input type="number" class="form-control" wire:model="items.{{ $index }}.purchase_price" min="0" step="0.01">
-                                                @error("items.{$index}.purchase_price") <span class="text-danger">{{ $message }}</span> @enderror
-                                            </td>
+                                            {{-- saya ganti jadi price --}}
                                             <td>
                                                 <input type="number" class="form-control" wire:model="items.{{ $index }}.unit_price" min="0" step="0.01">
                                                 @error("items.{$index}.unit_price") <span class="text-danger">{{ $message }}</span> @enderror
+                                            </td>
+                                            {{-- bagian ini saya ganti ke unit_price --}}
+                                            <td>
+                                                <input type="number" class="form-control" wire:model="items.{{ $index }}.price" min="0" step="0.01">
+                                                @error("items.{$index}.price") <span class="text-danger">{{ $message }}</span> @enderror
                                             </td>
                                             <td>
                                                 <div class="input-group">
@@ -207,7 +209,7 @@
                                 </tbody>
                                 <tfoot>
                                     <tr>
-                                        <td colspan="6" class="text-right"><strong>Subtotal:</strong></td>
+                                        <td colspan="6" class="text-right"><strong>Total:</strong></td>
                                         <td colspan="2">
                                             <strong>{{ number_format($total_amount, 2) }}</strong>
                                         </td>
