@@ -30,24 +30,26 @@ class ProductTable extends Component
     }
 
     public function productSelected($product) {
-        switch ($this->hasAdjustments) {
-            case true:
-                if (in_array($product, array_map(function ($adjustment) {
-                    return $adjustment['product'];
-                }, $this->products))) {
-                    return session()->flash('message', 'Already exists in the product list!');
-                }
-                break;
-            case false:
-                if (in_array($product, $this->products)) {
-                    return session()->flash('message', 'Already exists in the product list!');
-                }
-                break;
-            default:
-                return session()->flash('message', 'Something went wrong!');
+        $branch_id = session('branch_id'); // pastikan session branch_id sudah ada
+        $productModel = Product::with(['batches' => function($q) use ($branch_id) {
+            $q->where('branch_id', $branch_id)->where('qty', '>', 0);
+        }])->find($product['id']);
+    
+        if (!$productModel) {
+            return session()->flash('message', 'Produk tidak ditemukan!');
         }
-
-        array_push($this->products, $product);
+    
+        // Cek duplikasi
+        foreach ($this->products as $p) {
+            if ($p['id'] == $productModel->id) {
+                return session()->flash('message', 'Already exists in the product list!');
+            }
+        }
+    
+        $productArr = $productModel->toArray();
+        $productArr['batches'] = $productModel->batches->toArray();
+    
+        $this->products[] = $productArr;
     }
 
     public function removeProduct($key) {

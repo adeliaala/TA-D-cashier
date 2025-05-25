@@ -1,4 +1,5 @@
 <div>
+    {{-- Alert Message --}}
     @if (session()->has('message'))
         <div class="alert alert-warning alert-dismissible fade show" role="alert">
             <div class="alert-body">
@@ -9,76 +10,100 @@
             </div>
         </div>
     @endif
-    <div class="table-responsive">
-        <div wire:loading.flex class="col-12 position-absolute justify-content-center align-items-center" style="top:0;right:0;left:0;bottom:0;background-color: rgba(255,255,255,0.5);z-index: 99;">
-            <div class="spinner-border text-primary" role="status">
-                <span class="sr-only">Loading...</span>
-            </div>
+
+    {{-- Loading Overlay --}}
+    <div wire:loading.flex class="col-12 position-absolute justify-content-center align-items-center"
+         style="top:0;right:0;left:0;bottom:0;background-color: rgba(255,255,255,0.5);z-index: 99;">
+        <div class="spinner-border text-primary" role="status">
+            <span class="sr-only">Loading...</span>
         </div>
+    </div>
+
+    {{-- Product Table --}}
+    <div class="table-responsive">
         <table class="table table-bordered">
             <thead>
-            <tr class="align-middle">
-                <th class="align-middle">#</th>
-                <th class="align-middle">Product Name</th>
-                <th class="align-middle">Code</th>
-                <th class="align-middle">Stock</th>
-                <th class="align-middle">Quantity</th>
-                <th class="align-middle">Type</th>
-                <th class="align-middle">Action</th>
-            </tr>
+                <tr class="align-middle text-center">
+                    <th>#</th>
+                    <th>Product Name</th>
+                    <th>Code</th>
+                    <th>Batch</th>
+                    <th>Stock</th>
+                    <th>Quantity</th>
+                    <th>Type</th>
+                    <th>Action</th>
+                </tr>
             </thead>
             <tbody>
-            @if(!empty($products))
-                @foreach($products as $key => $product)
-                    <tr>
-                        <td class="align-middle">{{ $key + 1 }}</td>
-                        <td class="align-middle">{{ $product['product_name'] ?? $product['product']['product_name'] }}</td>
-                        <td class="align-middle">{{ $product['product_code'] ?? $product['product']['product_code'] }}</td>
-                        <td class="align-middle text-center">
-                            <span class="badge badge-info">
-                                {{ $product['product_quantity'] ?? $product['product']['product_quantity'] }} {{ $product['product_unit'] ?? $product['product']['product_unit'] }}
-                            </span>
-                        </td>
-                        <input type="hidden" name="product_ids[]" value="{{ $product['product']['id'] ?? $product['id'] }}">
-                        <td class="align-middle">
-                            <input type="number" name="quantities[]" min="1" class="form-control" value="{{ $product['quantity'] ?? 1 }}">
-                        </td>
-                        <td class="align-middle">
-                            @if(isset($product['type']))
-                                @if($product['type'] == 'add')
-                                    <select name="types[]" class="form-control">
-                                        <option value="add" selected>(+) Addition</option>
-                                        <option value="sub">(-) Subtraction</option>
-                                    </select>
-                                @elseif($product['type'] == 'sub')
-                                    <select name="types[]" class="form-control">
-                                        <option value="sub" selected>(-) Subtraction</option>
-                                        <option value="add">(+) Addition</option>
-                                    </select>
-                                @endif
-                            @else
-                                <select name="types[]" class="form-control">
-                                    <option value="add">(+) Addition</option>
-                                    <option value="sub">(-) Subtraction</option>
+                @if (!empty($products))
+                    @foreach ($products as $key => $product)
+                        @php
+                            $productData = $product['product'] ?? $product;
+                            $batches = $product['batches'] ?? [];
+                        @endphp
+                        <tr>
+                            <td class="align-middle text-center">{{ $key + 1 }}</td>
+
+                            {{-- Product Name --}}
+                            <td class="align-middle">{{ $productData['product_name'] }}</td>
+
+                            {{-- Product Code --}}
+                            <td class="align-middle">{{ $productData['product_code'] }}</td>
+
+                            {{-- Batch Select --}}
+                            <td class="align-middle">
+                                <select name="product_batch_ids[]" class="form-control" required>
+                                    <option value="">Pilih Batch</option>
+                                    @foreach ($batches as $batch)
+                                        <option value="{{ $batch['id'] }}">
+                                            {{ $batch['batch_code'] ?? '-' }} | Qty: {{ $batch['qty'] }}
+                                        </option>
+                                    @endforeach
                                 </select>
-                            @endif
-                        </td>
-                        <td class="align-middle text-center">
-                            <button type="button" class="btn btn-danger" wire:click="removeProduct({{ $key }})">
-                                <i class="bi bi-trash"></i>
-                            </button>
+                            </td>
+
+                            {{-- Stock (dari batch, default ambil batch pertama jika ada) --}}
+                            <td class="align-middle text-center">
+                                @php
+                                    $firstBatch = $batches[0] ?? null;
+                                @endphp
+                                <span class="badge badge-info">
+                                    {{ $firstBatch['qty'] ?? '0' }} {{ $productData['product_unit'] }}
+                                </span>
+                            </td>
+
+                            {{-- Quantity Input --}}
+                            <td class="align-middle">
+                                <input type="number" name="quantities[]" min="1" class="form-control"
+                                       value="{{ $product['quantity'] ?? 1 }}">
+                            </td>
+
+                            {{-- Type Select --}}
+                            <td class="align-middle">
+                                <select name="types[]" class="form-control">
+                                    <option value="add" {{ ($product['type'] ?? '') === 'add' ? 'selected' : '' }}>(+) Addition</option>
+                                    <option value="sub" {{ ($product['type'] ?? '') === 'sub' ? 'selected' : '' }}>(-) Subtraction</option>
+                                </select>
+                            </td>
+
+                            {{-- Hidden Product ID --}}
+                            <input type="hidden" name="product_ids[]" value="{{ $productData['id'] }}">
+
+                            {{-- Action Button --}}
+                            <td class="align-middle text-center">
+                                <button type="button" class="btn btn-danger" wire:click="removeProduct({{ $key }})">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    @endforeach
+                @else
+                    <tr>
+                        <td colspan="8" class="text-center">
+                            <span class="text-danger">Please search & select products!</span>
                         </td>
                     </tr>
-                @endforeach
-            @else
-                <tr>
-                    <td colspan="7" class="text-center">
-                        <span class="text-danger">
-                            Please search & select products!
-                        </span>
-                    </td>
-                </tr>
-            @endif
+                @endif
             </tbody>
         </table>
     </div>

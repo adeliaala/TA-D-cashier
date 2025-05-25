@@ -36,13 +36,14 @@ class AdjustmentController extends Controller
             'reference'   => 'required|string|max:255',
             'date'        => 'required|date',
             'note'        => 'nullable|string|max:1000',
-            'product_ids' => 'required',
+            'product_batch_ids' => 'required',
             'quantities'  => 'required',
             'types'       => 'required'
         ]);
 
         DB::transaction(function () use ($request) {
             $adjustment = Adjustment::create([
+                'branches_id' => session('branch_id'),
                 'date' => $request->date,
                 'note' => $request->note
             ]);
@@ -51,22 +52,34 @@ class AdjustmentController extends Controller
                 AdjustedProduct::create([
                     'adjustment_id' => $adjustment->id,
                     'product_id'    => $id,
+                    'product_batch_id' => $request->product_batch_ids[$key],
                     'quantity'      => $request->quantities[$key],
                     'type'          => $request->types[$key]
                 ]);
-
-                $product = Product::findOrFail($id);
-
-                if ($request->types[$key] == 'add') {
-                    $product->update([
-                        'product_quantity' => $product->product_quantity + $request->quantities[$key]
-                    ]);
-                } elseif ($request->types[$key] == 'sub') {
-                    $product->update([
-                        'product_quantity' => $product->product_quantity - $request->quantities[$key]
-                    ]);
+            
+                $batchId = $request->product_batch_ids[$key]; // batch yang dipilih oleh user
+                $batch = DB::table('product_batches')->where('id', $batchId)->lockForUpdate()->first();
+            
+                if ($batch) {
+                    if ($request->types[$key] == 'add') {
+                        DB::table('product_batches')->where('id', $batchId)->update([
+                            'qty' => $batch->qty + $request->quantities[$key]
+                        ]);
+                    } elseif ($request->types[$key] == 'sub') {
+                        $newQty = $batch->qty - $request->quantities[$key];
+                        if ($newQty < 0) {
+                            throw new \Exception("Stock untuk batch {$batch->batch_code} tidak mencukupi.");
+                        }
+            
+                        DB::table('product_batches')->where('id', $batchId)->update([
+                            'qty' => $newQty
+                        ]);
+                    }
+                } else {
+                    throw new \Exception("Batch tidak ditemukan.");
                 }
             }
+            
         });
 
         toast('Adjustment Created!', 'success');
@@ -128,6 +141,7 @@ class AdjustmentController extends Controller
                 AdjustedProduct::create([
                     'adjustment_id' => $adjustment->id,
                     'product_id'    => $id,
+                    'product_batch_id' => $request->batch_ids[$key],
                     'quantity'      => $request->quantities[$key],
                     'type'          => $request->types[$key]
                 ]);
