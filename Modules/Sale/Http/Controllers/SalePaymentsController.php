@@ -46,6 +46,7 @@ class SalePaymentsController extends Controller
 
         DB::transaction(function () use ($request) {
             SalePayment::create([
+                'branch_id' => session('branch_id'), // tambahkan ini
                 'date' => $request->date,
                 'reference' => $request->reference,
                 'amount' => $request->amount,

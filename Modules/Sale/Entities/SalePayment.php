@@ -11,7 +11,11 @@ class SalePayment extends Model
 
     use HasFactory;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'branch_id', 'sale_id', 'amount', 'date', 'reference', 'payment_method', 'note'
+    ];
+
+    protected $with = ['sale'];
 
     public function sale() {
         return $this->belongsTo(Sale::class, 'sale_id', 'id');

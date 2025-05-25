@@ -4,6 +4,7 @@ namespace App\Livewire\Pos;
 
 use Gloudemans\Shoppingcart\Facades\Cart;
 use Livewire\Component;
+use App\Models\ProductBatch;
 
 class Checkout extends Component
 {
@@ -69,25 +70,28 @@ class Checkout extends Component
 
         if ($exists->isNotEmpty()) {
             session()->flash('message', 'Product exists in the cart!');
-
             return;
         }
+
+        $branchId = session('active_branch') ?? 1;
+        $qty = 1;
+        $fifoPrice = ProductBatch::getFifoBatchPrice($product['id'], $branchId, $qty);
 
         $cart->add([
             'id'      => $product['id'],
             'name'    => $product['product_name'],
-            'qty'     => 1,
-            'price'   => $this->calculate($product)['price'],
+            'qty'     => $qty,
+            'price'   => $fifoPrice,
             'weight'  => 1,
             'options' => [
                 'product_discount'      => 0.00,
                 'product_discount_type' => 'fixed',
-                'sub_total'             => $this->calculate($product)['sub_total'],
+                'sub_total'             => $fifoPrice,
                 'code'                  => $product['product_code'],
                 'stock'                 => $product['product_quantity'],
                 'unit'                  => $product['product_unit'],
-                'product_tax'           => $this->calculate($product)['product_tax'],
-                'unit_price'            => $this->calculate($product)['unit_price']
+                'product_tax'           => 0,
+                'unit_price'            => $fifoPrice
             ]
         ]);
 

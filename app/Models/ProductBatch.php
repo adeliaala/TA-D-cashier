@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 use Modules\Product\Entities\Product;
+use App\Models\Branch;
 
 class ProductBatch extends Model
 {
@@ -15,6 +16,7 @@ class ProductBatch extends Model
         'batch_code',
         'qty',
         'unit_price',
+        'price',
         'exp_date',
         'purchase_id',
         'created_by',
@@ -24,6 +26,7 @@ class ProductBatch extends Model
     protected $casts = [
         'exp_date' => 'date',
         'unit_price' => 'decimal:2',
+        'price' => 'decimal:2',
     ];
 
     public function product(): BelongsTo
@@ -77,7 +80,8 @@ class ProductBatch extends Model
                 'batch_id' => $batch->id,
                 'qty' => $deductAmount,
                 'unit_price' => $batch->unit_price,
-                'exp_date' => $batch->exp_date
+                'price' => $batch->price,
+                'exp_date' => $batch->exp_date,
             ];
 
             $remainingQuantity -= $deductAmount;
@@ -100,7 +104,7 @@ class ProductBatch extends Model
             $data['exp_date'] = $data['expired_date'];
             unset($data['expired_date']);
         }
-        
+
         // Rename purchase_price to unit_price if it exists
         if (isset($data['purchase_price'])) {
             $data['unit_price'] = $data['purchase_price'];
@@ -108,10 +112,40 @@ class ProductBatch extends Model
         }
 
         // Generate batch code if not provided
-        if (!isset($data['batch_code'])) {
+        if (empty($data['batch_code'])) {
             $data['batch_code'] = self::generateBatchCode();
         }
 
         return self::create($data);
     }
-} 
+
+    /**
+     * Get FIFO batch unit price (average from earliest batches)
+     */
+    public static function getFifoBatchPrice(int $productId, int $branchId, int $qty = 1): float
+    {
+        $batches = self::where('product_id', $productId)
+            ->where('branch_id', $branchId)
+            ->where('qty', '>', 0)
+            ->orderBy('exp_date', 'asc')
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        $remaining = $qty;
+        $totalPrice = 0;
+
+        foreach ($batches as $batch) {
+            if ($remaining <= 0) break;
+
+            $take = min($remaining, $batch->qty);
+            $totalPrice += $take * $batch->unit_price;
+            $remaining -= $take;
+        }
+
+        if ($remaining > 0) {
+            throw new \Exception('Stok tidak cukup untuk menghitung harga FIFO');
+        }
+
+        return round($totalPrice / $qty, 2);
+    }
+}

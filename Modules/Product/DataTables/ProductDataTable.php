@@ -21,7 +21,8 @@ class ProductDataTable extends DataTable
             })
             ->addColumn('product_image', function ($data) {
                 $url = Product::find($data->id)->getFirstMediaUrl('images');
-                return '<img src="'.$url.'" class="product-img-thumb" alt="">';
+                return '<img src="'.$url.'" class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;" alt="Product Image">';
+
             })
             ->addColumn('product_name', function ($data) {
                 return '<a href="'.route('products.show', $data->id).'">'.$data->product_name.'</a>';
@@ -33,28 +34,64 @@ class ProductDataTable extends DataTable
     }
 
     public function query(Product $model)
-    {
-        $products = DB::table('products')
-            ->leftJoinSub(
-                DB::table('product_batches')
-                    ->select('product_id', DB::raw('SUM(qty) as total_quantity'))
-                    ->groupBy('product_id'),
-                'pb',
-                'products.id',
-                '=',
-                'pb.product_id'
-            )
-            ->select(
-                'products.id',
-                'products.product_name',
-                'products.product_code',
-                'products.product_unit',
-                'products.category_id',
-                DB::raw('COALESCE(pb.total_quantity, 0) as product_quantity')
-            );
+{
+    // Subquery untuk total stock
+    $stockSubquery = DB::table('product_batches')
+        ->select('product_id', DB::raw('SUM(qty) as total_quantity'))
+        ->groupBy('product_id');
 
-        return $products;
-    }
+    // Subquery untuk batch pertama berdasarkan exp_date (FIFO)
+    $fifoSubquery = DB::table('product_batches as pb')
+        ->select('pb.product_id', 'pb.unit_price', 'pb.exp_date')
+        ->whereRaw('pb.id = (
+            SELECT id FROM product_batches 
+            WHERE product_id = pb.product_id 
+            ORDER BY exp_date ASC, id ASC 
+            LIMIT 1
+        )');
+
+    // Join dengan subqueries
+    $products = DB::table('products')
+        ->leftJoinSub($stockSubquery, 'stock', 'products.id', '=', 'stock.product_id')
+        ->leftJoinSub($fifoSubquery, 'fifo', 'products.id', '=', 'fifo.product_id')
+        ->select(
+            'products.id',
+            'products.product_name',
+            'products.product_code',
+            'products.product_unit',
+            'products.category_id',
+            DB::raw('COALESCE(stock.total_quantity, 0) as product_quantity'),
+            DB::raw('fifo.unit_price as fifo_price'),
+            DB::raw('fifo.exp_date as fifo_exp_date')
+        );
+
+    return $products;
+}
+
+
+    // public function query(Product $model)
+    // {
+    //     $products = DB::table('products')
+    //         ->leftJoinSub(
+    //             DB::table('product_batches')
+    //                 ->select('product_id', DB::raw('SUM(qty) as total_quantity'))
+    //                 ->groupBy('product_id'),
+    //             'pb',
+    //             'products.id',
+    //             '=',
+    //             'pb.product_id'
+    //         )
+    //         ->select(
+    //             'products.id',
+    //             'products.product_name',
+    //             'products.product_code',
+    //             'products.product_unit',
+    //             'products.category_id',
+    //             DB::raw('COALESCE(pb.total_quantity, 0) as product_quantity')
+    //         );
+
+    //     return $products;
+    // }
 
     public function html()
     {
@@ -84,27 +121,31 @@ class ProductDataTable extends DataTable
             Column::make('product_image')
                 ->title('Image')
                 ->className('text-center align-middle'),
-
+    
             Column::make('product_name')
                 ->title('Name')
                 ->className('text-center align-middle'),
-
+    
             Column::make('product_code')
                 ->title('Code')
                 ->className('text-center align-middle'),
-
-            // Column::make('category.category_name')
-            //     ->title('Category')
-            //     ->className('text-center align-middle'),
-
+    
             Column::make('product_unit')
                 ->title('Unit')
                 ->className('text-center align-middle'),
-
+    
             Column::make('total_quantity')
                 ->title('Quantity')
                 ->className('text-center align-middle'),
-
+    
+            Column::make('fifo_price')
+                ->title('Batch Price')
+                ->className('text-center align-middle'),
+    
+            Column::make('fifo_exp_date')
+                ->title('Exp Date')
+                ->className('text-center align-middle'),
+    
             Column::computed('action')
                 ->exportable(false)
                 ->printable(false)
@@ -112,6 +153,7 @@ class ProductDataTable extends DataTable
                 ->addClass('text-center'),
         ];
     }
+    
 
     /**
      * Get filename for export.

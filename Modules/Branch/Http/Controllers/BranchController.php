@@ -98,7 +98,8 @@ class BranchController extends Controller
         auth()->user()->update(['active_branch_id' => $branch->id]);
         
         // Store in session
-        session(['active_branch_id' => $branch->id]);
+        session(['branch_id' => $branch->id]);
+
         
         return redirect()->back()->with('success', 'Branch switched successfully to ' . $branch->name);
     }

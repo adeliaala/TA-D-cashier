@@ -22,7 +22,9 @@
                                     {{ $product->product_code }}
                                 </span>
                                 </div>
-                                <p class="card-text font-weight-bold">{{ format_currency($product->product_price) }}</p>
+                                <p class="card-text font-weight-bold">
+                                    {{ format_currency($product->fifo_price ?? 0) }}
+                                </p>
                             </div>
                         </div>
                     </div>

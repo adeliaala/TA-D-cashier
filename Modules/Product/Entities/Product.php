@@ -69,6 +69,20 @@ class Product extends Model implements HasMedia
     /**
      * Setter & Getter harga jual
      */
+
+     public function getFifoPriceAttribute(): ?float
+{
+    try {
+        return \App\Models\ProductBatch::getFifoBatchPrice(
+            $this->id,
+            session('branch_id', 1), // pastikan session branch_id aktif
+            1 // ambil harga per unit
+        );
+    } catch (\Exception $e) {
+        return null;
+    }
+}
+
     public function setProductPriceAttribute($value) {
         $this->attributes['product_price'] = $value !== null ? ($value * 100) : null;
     }
@@ -80,18 +94,18 @@ class Product extends Model implements HasMedia
     /**
      * Hitung harga grosir jika kuantitas mencukupi
      */
-    public function getWholesalePrice($quantity) {
-        if ($this->min_quantity_for_wholesale && $quantity >= $this->min_quantity_for_wholesale) {
-            $discount = $this->wholesale_discount_percentage / 100;
-            return $this->product_price * (1 - $discount);
-        }
-        return $this->product_price;
-    }
+    // public function getWholesalePrice($quantity) {
+    //     if ($this->min_quantity_for_wholesale && $quantity >= $this->min_quantity_for_wholesale) {
+    //         $discount = $this->wholesale_discount_percentage / 100;
+    //         return $this->product_price * (1 - $discount);
+    //     }
+    //     return $this->product_price;
+    // }
 
     /**
      * Cek apakah kuantitas memenuhi harga grosir
      */
-    public function isWholesalePrice($quantity) {
-        return $this->min_quantity_for_wholesale && $quantity >= $this->min_quantity_for_wholesale;
-    }
+    // public function isWholesalePrice($quantity) {
+    //     return $this->min_quantity_for_wholesale && $quantity >= $this->min_quantity_for_wholesale;
+    // }
 }

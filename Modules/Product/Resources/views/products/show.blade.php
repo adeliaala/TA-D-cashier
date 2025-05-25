@@ -13,12 +13,16 @@
 @section('content')
     <div class="container-fluid mb-4">
         <div class="row">
-            <div class="col-lg-9">
-                <div class="card h-100">
+            <!-- Informasi Produk -->
+            <div class="col-lg-8">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0">Product Information</h5>
+                    </div>
                     <div class="table-responsive">
                         <table class="table table-bordered table-striped mb-0">
                             <tr>
-                                <th>Product Code</th>
+                                <th width="30%">Product Code</th>
                                 <td>{{ $product->product_code }}</td>
                             </tr>
                             <tr>
@@ -39,23 +43,63 @@
                             </tr>
                             <tr>
                                 <th>Note</th>
-                                <td>{{ $product->product_note }}</td>
+                                <td>{{ $product->product_note ?? '-' }}</td>
                             </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Batch Details -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Batch Details (Qty > 0)</h5>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover table-sm mb-0 text-center">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Batch Code</th>
+                                    <th>Harga Beli</th>
+                                    <th>Price</th>
+                                    <th>Stock</th>
+                                    <th>Expiry Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($product->batches as $batch)
+                                    <tr>
+                                        <td>{{ $batch->batch_code ?? '-' }}</td>
+                                        <td>Rp {{ number_format($batch->unit_price, 0, ',', '.') }}</td>
+                                        <td>Rp {{ number_format($batch->price, 0, ',', '.') }}</td>
+                                        <td>{{ $batch->qty }}</td>
+                                        <td>{{ $batch->exp_date ? \Carbon\Carbon::parse($batch->exp_date)->format('d M Y') : '-' }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="4">No available batches.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <div class="col-lg-3">
+            <!-- Gambar Produk -->
+            <div class="col-lg-4">
                 <div class="card h-100">
                     <div class="card-body">
                         <h5 class="card-title">Product Images</h5>
                         <div class="row">
-                            @foreach($product->getMedia('images') as $media)
+                            @forelse($product->getMedia('images') as $media)
                                 <div class="col-md-6 mb-2">
-                                    <img src="{{ $media->getUrl() }}" alt="{{ $product->product_name }}" class="img-fluid">
+                                    <img src="{{ $media->getUrl() }}" alt="{{ $product->product_name }}" class="img-fluid rounded border shadow-sm" style="max-height: 120px; object-fit: cover;">
                                 </div>
-                            @endforeach
+                            @empty
+                                <div class="col-12">
+                                    <p class="text-muted">No images uploaded.</p>
+                                </div>
+                            @endforelse
                         </div>
                     </div>
                 </div>
@@ -63,6 +107,3 @@
         </div>
     </div>
 @endsection
-
-
-

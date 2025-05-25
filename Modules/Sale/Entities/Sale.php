@@ -10,6 +10,7 @@ class Sale extends Model
     use HasFactory;
 
     protected $fillable = [
+        'branch_id', // ← TAMBAHKAN INI
         'date',
         'reference',
         'customer_id',
@@ -23,6 +24,7 @@ class Sale extends Model
         'payment_method',
         'note'
     ];
+    
 
     public function saleDetails() {
         return $this->hasMany(SaleDetails::class, 'sale_id', 'id');
@@ -60,4 +62,6 @@ class Sale extends Model
     public function getDiscountAmountAttribute($value) {
         return $value / 100;
     }
+
+    
 }
