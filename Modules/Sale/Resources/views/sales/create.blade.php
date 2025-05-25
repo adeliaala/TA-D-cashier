@@ -4,8 +4,4 @@
                     </div>
                     <div class="form-group">
                         <label for="discount_amount">Discount Amount</label>
-                        <input type="number" class="form-control" id="discount_amount" name="discount_amount" min="0" value="0" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label for="total_amount">Total Amount</label>
-                        <input type="number" class="form-control" id="total_amount" name="total_amount" min="0" value="0" readonly> 
+                        <input type="number" class="form-control" id="discount_amount" name="discount_amount" min="0" value="0" readonly> 
