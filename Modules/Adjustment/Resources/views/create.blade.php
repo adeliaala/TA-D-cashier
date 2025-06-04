@@ -11,7 +11,9 @@
 @endsection
 
 @section('content')
+
     <div class="container-fluid mb-4">
+        <h4>Sesuaikan Stok</h4>
         <div class="row">
             <div class="col-12">
                 <livewire:search-product/>

@@ -148,4 +148,31 @@ class ProductBatch extends Model
 
         return round($totalPrice / $qty, 2);
     }
+
+    public static function transferToBranch(int $sourceBatchId, int $destinationBranchId, int $qty, int $userId): ProductBatch
+    {
+        $sourceBatch = self::lockForUpdate()->findOrFail($sourceBatchId);
+
+        if ($sourceBatch->quantity < $qty) {
+            throw new \Exception("Stok tidak cukup pada batch {$sourceBatch->batch_code}");
+        }
+
+        // Kurangi stok dari batch asal
+        $sourceBatch->quantity -= $qty;
+        $sourceBatch->save();
+
+        // Buat batch baru di cabang tujuan
+        return self::create([
+            'product_id' => $sourceBatch->product_id,
+            'batch_code' => $sourceBatch->batch_code,
+            'unit_price' => $sourceBatch->unit_price,
+            'price' => $sourceBatch->price,
+            'expired_date' => $sourceBatch->expired_date,
+            'purchase_id' => $sourceBatch->purchase_id,
+            'branch_id' => $destinationBranchId,
+            'quantity' => $qty,
+            'created_by' => $userId,
+            'updated_by' => $userId,
+        ]);
+    }
 }
