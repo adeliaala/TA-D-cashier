@@ -5,6 +5,7 @@
 @endsection
 
 @section('content')
+    <div class="container-fluid mb-4">
     <div class="row">
         <div class="col-12">
             <div class="card">
@@ -39,7 +40,7 @@
                                         <td>{{ $branch->phone }}</td>
                                         <td>{{ $branch->email }}</td>
                                         <td>
-                                            @if($branch->status)
+                                            @if($branch->is_active)
                                                 <span class="badge badge-success">Active</span>
                                             @else
                                                 <span class="badge badge-danger">Inactive</span>
@@ -47,11 +48,11 @@
                                         </td>
                                         <td>
                                             <a href="{{ route('branch.show', $branch->id) }}" class="btn btn-info btn-sm">
-                                                <i class="fas fa-eye"></i>
+                                                <i class="fas fa-eye"></i> View
                                             </a>
                                             @can('edit_branches')
                                             <a href="{{ route('branch.edit', $branch->id) }}" class="btn btn-primary btn-sm">
-                                                <i class="fas fa-edit"></i>
+                                                <i class="fas fa-edit"></i> Edit
                                             </a>
                                             @endcan
                                             @can('delete_branches')
@@ -59,7 +60,7 @@
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')">
-                                                    <i class="fas fa-trash"></i>
+                                                    <i class="fas fa-trash"></i> Delete
                                                 </button>
                                             </form>
                                             @endcan

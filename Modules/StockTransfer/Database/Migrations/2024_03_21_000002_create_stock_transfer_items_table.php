@@ -13,7 +13,7 @@ return new class extends Migration
             $table->foreignId('stock_transfer_id')->constrained('stock_transfers')->onDelete('cascade');
             $table->foreignId('product_id')->constrained('products')->onDelete('restrict');
             $table->foreignId('product_batch_id')->constrained('product_batches')->onDelete('restrict');
-            $table->integer('quantity');
+            $table->integer('qty');
             $table->timestamps();
         });
     }

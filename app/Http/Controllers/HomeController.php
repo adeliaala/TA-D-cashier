@@ -4,233 +4,124 @@ namespace App\Http\Controllers;
 
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Modules\Expense\Entities\Expense;
-use Modules\Purchase\Entities\Purchase;
-use Modules\Purchase\Entities\PurchasePayment;
 use Modules\Sale\Entities\Sale;
-use Modules\Sale\Entities\SalePayment;
+use App\Models\ProductBatch;
 
 class HomeController extends Controller
 {
+    public function index()
+    {
+        $branch_id = session('branch_id');
 
-    public function index() {
-        // Cek session dulu
-        $activeBranchId = session('active_branch_id');
+        // Ambil filter bulan dan tahun dari query string, default: bulan dan tahun sekarang
+        $bulan = request('filterBulan') ?? now()->format('m');
+        $tahun = request('filterTahun') ?? now()->format('Y');
+
+        $start = Carbon::createFromDate($tahun, $bulan)->startOfMonth();
+        $end = Carbon::createFromDate($tahun, $bulan)->endOfMonth();
+
+        // Pendapatan bulan ini
+        $monthlyRevenue = Sale::whereBetween('date', [$start, $end])
+            ->where('branch_id', $branch_id)
+            ->sum('total_amount') ;
+
+        // Pendapatan hari ini
+        $todayRevenue = Sale::whereDate('date', now())
+            ->where('branch_id', $branch_id)
+            ->sum('total_amount') ;
+
+        // Jumlah pembeli hari ini
+        $todayCustomers = Sale::whereDate('date', now())
+            ->where('branch_id', $branch_id)
+            ->count();
         
-        // Jika tidak ada di session, coba ambil dari user
-        if (!$activeBranchId) {
-            $user = auth()->user();
-            if ($user && $user->active_branch) {
-                $activeBranchId = $user->active_branch->id;
-            } else {
-                // Default ke branch ID 1 jika tidak ada
-                $activeBranchId = 1;
-                session(['active_branch_id' => $activeBranchId]);
-            }
-        }
+        // Jumlah Pembeli bulan ini
+        $monthCustomers = Sale::whereBetween('date', [$start, $end])
+            ->where('branch_id', $branch_id)
+            ->count();
 
-        $sales = Sale::where('payment_status', 'Completed')
-            ->where('branch_id', $activeBranchId)
-            ->sum('total_amount');
-            
-        $product_costs = 0;
+        // Profit bulan ini
+        $profit = Sale::whereBetween('date', [$start, $end])
+            ->where('branch_id', $branch_id)
+            ->sum(DB::raw('total_amount - paid_amount')) / 100;
 
-        foreach (Sale::where('payment_status', 'Completed')
-            ->where('branch_id', $activeBranchId)
-            ->with('saleDetails')->get() as $sale) {
-            foreach ($sale->saleDetails as $saleDetail) {
-                if (!is_null($saleDetail->product)) {
-                    $product_costs += $saleDetail->product->product_cost * $saleDetail->quantity;
-                }
-            }
-        }
+        // Chart pendapatan harian berdasarkan range bulan & tahun
+        $dailyRevenueChart = $this->getDailyRevenueChart($branch_id, $start, $end);
 
-        $revenue = $sales / 100;
-        $profit = $revenue - $product_costs;
+        // Chart penjualan per kategori
+        $categorySalesChart = $this->getCategorySalesChart($branch_id, $bulan, $tahun);
 
-        return view('home', [
-            'revenue' => $revenue,
-            'profit'  => $profit
-        ]);
+        // Produk yang akan kadaluarsa (30 hari ke depan dari sekarang)
+        $expiringBatches = ProductBatch::with(['product', 'branch'])
+            ->where('branch_id', $branch_id)
+            ->whereDate('exp_date', '<=', now()->addDays(30))
+            ->orderBy('exp_date')
+            ->get();
+
+        return view('home', compact(
+            'monthlyRevenue',
+            'todayRevenue',
+            'todayCustomers',
+            'monthCustomers',
+            'profit',
+            'dailyRevenueChart',
+            'categorySalesChart',
+            'expiringBatches'
+        ));
     }
 
-    public function currentMonthChart() {
-        abort_if(!request()->ajax(), 404);
-
-        $activeBranchId = session('active_branch_id') ?? 1;
-
-        $currentMonthSales = Sale::where('payment_status', 'Completed')
-            ->where('branch_id', $activeBranchId)
-            ->whereMonth('date', date('m'))
-            ->whereYear('date', date('Y'))
-            ->sum('total_amount') / 100;
-            
-        $currentMonthPurchases = Purchase::where('payment_status', 'Completed')
-            ->where('branch_id', $activeBranchId)
-            ->whereMonth('date', date('m'))
-            ->whereYear('date', date('Y'))
-            ->sum('total_amount') / 100;
-            
-        $currentMonthExpenses = Expense::where('branch_id', $activeBranchId)
-            ->whereMonth('date', date('m'))
-            ->whereYear('date', date('Y'))
-            ->sum('amount') / 100;
-
-        return response()->json([
-            'sales'     => $currentMonthSales,
-            'purchases' => $currentMonthPurchases,
-            'expenses'  => $currentMonthExpenses
-        ]);
-    }
-
-    public function salesPurchasesChart() {
-        abort_if(!request()->ajax(), 404);
-
-        $activeBranchId = session('active_branch_id') ?? 1;
-
-        $sales = $this->salesChartData();
-        $purchases = $this->purchasesChartData();
-
-        return response()->json(['sales' => $sales, 'purchases' => $purchases]);
-    }
-
-    public function paymentChart() {
-        abort_if(!request()->ajax(), 404);
-
-        $activeBranchId = session('active_branch_id') ?? 1;
-
-        $dates = collect();
-        foreach (range(-11, 0) as $i) {
-            $date = Carbon::now()->addMonths($i)->format('m-Y');
-            $dates->put($date, 0);
-        }
-
-        $date_range = Carbon::today()->subYear()->format('Y-m-d');
-
-        $sale_payments = SalePayment::where('date', '>=', $date_range)
-            ->where('branch_id', $activeBranchId)
-            ->select([
-                DB::raw("DATE_FORMAT(date, '%m-%Y') as month"),
-                DB::raw("SUM(amount) as amount")
-            ])
-            ->groupBy('month')->orderBy('month')
-            ->get()->pluck('amount', 'month');
-
-        $purchase_payments = PurchasePayment::where('date', '>=', $date_range)
-            ->where('branch_id', $activeBranchId)
-            ->select([
-                DB::raw("DATE_FORMAT(date, '%m-%Y') as month"),
-                DB::raw("SUM(amount) as amount")
-            ])
-            ->groupBy('month')->orderBy('month')
-            ->get()->pluck('amount', 'month');
-
-        $expenses = Expense::where('date', '>=', $date_range)
-            ->where('branch_id', $activeBranchId)
-            ->select([
-                DB::raw("DATE_FORMAT(date, '%m-%Y') as month"),
-                DB::raw("SUM(amount) as amount")
-            ])
-            ->groupBy('month')->orderBy('month')
-            ->get()->pluck('amount', 'month');
-
-        $payment_received = $sale_payments;
-        $payment_sent = array_merge_numeric_values($purchase_payments, $expenses);
-
-        $dates_received = $dates->merge($payment_received);
-        $dates_sent = $dates->merge($payment_sent);
-
-        $received_payments = [];
-        $sent_payments = [];
-        $months = [];
-
-        foreach ($dates_received as $key => $value) {
-            $received_payments[] = $value;
-            $months[] = $key;
-        }
-
-        foreach ($dates_sent as $key => $value) {
-            $sent_payments[] = $value;
-        }
-
-        return response()->json([
-            'payment_sent' => $sent_payments,
-            'payment_received' => $received_payments,
-            'months' => $months,
-        ]);
-    }
-
-    public function salesChartData() {
-        $activeBranchId = session('active_branch_id') ?? 1;
-
-        $dates = collect();
-        foreach (range(-6, 0) as $i) {
-            $date = Carbon::now()->addDays($i)->format('d-m-y');
-            $dates->put($date, 0);
-        }
-
-        $date_range = Carbon::today()->subDays(6);
-
-        $sales = Sale::where('payment_status', 'Completed')
-            ->where('branch_id', $activeBranchId)
-            ->where('date', '>=', $date_range)
-            ->groupBy(DB::raw("DATE_FORMAT(date,'%d-%m-%y')"))
-            ->orderBy('date')
-            ->get([
-                DB::raw(DB::raw("DATE_FORMAT(date,'%d-%m-%y') as date")),
-                DB::raw('SUM(total_amount) AS count'),
-            ])->pluck('count', 'date');
-
-        $dates = $dates->merge($sales);
-
-        $data = [];
+    private function getDailyRevenueChart($branchId, $start, $end)
+    {
         $labels = [];
+        $data = [];
 
-        foreach ($dates as $key => $value) {
-            $data[] = $value / 100;
-            $labels[] = $key;
+        $current = $start->copy();
+        while ($current->lte($end)) {
+            $labels[] = $current->format('d M');
+
+            $revenue = Sale::whereDate('date', $current)
+                ->where('branch_id', $branchId)
+                ->sum('total_amount');
+
+            $data[] = $revenue;
+            $current->addDay();
         }
 
         return [
-            'data' => $data,
             'labels' => $labels,
+            'data' => $data
         ];
     }
 
-    public function purchasesChartData() {
-        $activeBranchId = session('active_branch_id') ?? 1;
+    private function getCategorySalesChart($branchId, $bulan, $tahun)
+    {
+        $categorySales = DB::table('sales')
+            ->join('sale_details', 'sales.id', '=', 'sale_details.sale_id')
+            ->join('products', 'sale_details.product_id', '=', 'products.id')
+            ->join('categories', 'products.category_id', '=', 'categories.id')
+            ->where('sales.branch_id', $branchId)
+            ->whereMonth('sales.date', $bulan)
+            ->whereYear('sales.date', $tahun)
+            ->select(
+                'categories.category_name',
+                DB::raw('SUM(sale_details.quantity) as total_quantity')
+            )
+            ->groupBy('categories.category_name')
+            ->orderByDesc('total_quantity')
+            ->get();
 
-        $dates = collect();
-        foreach (range(-6, 0) as $i) {
-            $date = Carbon::now()->addDays($i)->format('d-m-y');
-            $dates->put($date, 0);
-        }
-
-        $date_range = Carbon::today()->subDays(6);
-
-        $purchases = Purchase::where('payment_status', 'Completed')
-            ->where('branch_id', $activeBranchId)
-            ->where('date', '>=', $date_range)
-            ->groupBy(DB::raw("DATE_FORMAT(date,'%d-%m-%y')"))
-            ->orderBy('date')
-            ->get([
-                DB::raw(DB::raw("DATE_FORMAT(date,'%d-%m-%y') as date")),
-                DB::raw('SUM(total_amount) AS count'),
-            ])->pluck('count', 'date');
-
-        $dates = $dates->merge($purchases);
-
-        $data = [];
         $labels = [];
+        $data = [];
+        $total = $categorySales->sum('total_quantity');
 
-        foreach ($dates as $key => $value) {
-            $data[] = $value / 100;
-            $labels[] = $key;
+        foreach ($categorySales as $item) {
+            $labels[] = $item->category_name;
+            $data[] = $total > 0 ? round(($item->total_quantity / $total) * 100, 1) : 0;
         }
 
         return [
-            'data' => $data,
-            'labels' => $labels,
+            'labels' => $labels ?: ['Tidak ada data'],
+            'data' => $data ?: [100]
         ];
     }
 }

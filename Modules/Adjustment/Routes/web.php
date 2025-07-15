@@ -1,5 +1,7 @@
 <?php
 
+use Modules\Adjustment\Http\Controllers\AdjustmentController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -14,4 +16,6 @@
 Route::group(['middleware' => 'auth'], function () {
     //Product Adjustment
     Route::resource('adjustments', 'AdjustmentController');
+    Route::post('/adjustments/quick', [AdjustmentController::class, 'quickAdjustment'])->name('adjustments.quick');
+
 });

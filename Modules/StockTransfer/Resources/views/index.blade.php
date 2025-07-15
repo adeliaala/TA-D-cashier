@@ -11,7 +11,7 @@
                     <h3 class="card-title">Stock Transfers</h3>
                     <div class="card-tools">
                         @can('create_stock_transfers')
-                            <a href="{{ route('stock-transfers.create') }}" class="btn btn-primary">
+                            <a href="{{ route('stocktransfers.create') }}" class="btn btn-primary">
                                 <i class="bi bi-plus"></i> Create Transfer
                             </a>
                         @endcan
@@ -31,19 +31,19 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($stockTransfers as $transfer)
+                                @forelse($transfers as $transfer)
                                     <tr>
                                         <td>{{ $transfer->reference_no }}</td>
                                         <td>{{ $transfer->sourceBranch->name }}</td>
                                         <td>{{ $transfer->destinationBranch->name }}</td>
-                                        <td>{{ $transfer->transfer_date->format('d M Y') }}</td>
+                                        <td>{{ $transfer->transfer_date }}</td>
                                         <td>
                                             <span class="badge badge-{{ $transfer->status === 'completed' ? 'success' : ($transfer->status === 'pending' ? 'warning' : 'danger') }}">
                                                 {{ ucfirst($transfer->status) }}
                                             </span>
                                         </td>
                                         <td>
-                                            <a href="{{ route('stock-transfers.show', $transfer) }}" class="btn btn-info btn-sm">
+                                            <a href="{{ route('stocktransfers.show', $transfer) }}" class="btn btn-info btn-sm">
                                                 <i class="bi bi-eye"></i>
                                             </a>
                                         </td>
@@ -58,7 +58,7 @@
                     </div>
 
                     <div class="mt-4">
-                        {{ $stockTransfers->links() }}
+                        {{ $transfers->links() }}
                     </div>
                 </div>
             </div>

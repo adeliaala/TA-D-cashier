@@ -42,10 +42,11 @@ class ProductDataTable extends DataTable
 
     // Subquery untuk batch pertama berdasarkan exp_date (FIFO)
     $fifoSubquery = DB::table('product_batches as pb')
-        ->select('pb.product_id', 'pb.unit_price', 'pb.exp_date')
+        ->select('pb.product_id', 'pb.price', 'pb.exp_date')
         ->whereRaw('pb.id = (
             SELECT id FROM product_batches 
             WHERE product_id = pb.product_id 
+            AND qty > 0
             ORDER BY exp_date ASC, id ASC 
             LIMIT 1
         )');
@@ -61,7 +62,7 @@ class ProductDataTable extends DataTable
             'products.product_unit',
             'products.category_id',
             DB::raw('COALESCE(stock.total_quantity, 0) as product_quantity'),
-            DB::raw('fifo.unit_price as fifo_price'),
+            DB::raw('fifo.price as fifo_price'),
             DB::raw('fifo.exp_date as fifo_exp_date')
         );
 

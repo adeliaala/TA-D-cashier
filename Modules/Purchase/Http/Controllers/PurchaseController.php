@@ -49,7 +49,7 @@ class PurchaseController extends Controller
                 })
                 ->addColumn('supplier_name', function ($data) {
                     $supplier = DB::table('suppliers')->where('id', $data->supplier_id)->first();
-                    return $supplier ? $supplier->name : 'N/A';
+                    return $supplier ? $supplier->supplier_name : 'N/A';
                 })
                 ->editColumn('total', function ($data) {
                     return format_currency($data->total / 100);
@@ -92,7 +92,7 @@ class PurchaseController extends Controller
         'products.*.qty' => 'required|integer|min:1',
         'products.*.unit_price' => 'required|numeric|min:0',
         'products.*.price' => 'required|numeric|min:0',
-        'products.*.expired_date' => 'nullable|date|after:today',
+        'products.*.exp_date' => 'nullable|date|after:today',
         'discount_percentage' => 'nullable|numeric|min:0',
         'discount_amount' => 'nullable|numeric|min:0',
         'note' => 'nullable|string'
@@ -173,7 +173,7 @@ class PurchaseController extends Controller
                 'qty' => $product['qty'],
                 'unit_price' => $product['unit_price'],
                 'price' => $product['price'],
-                'exp_date' => $product['expired_date'],
+                'exp_date' => $product['exp_date'],
                 'purchase_id' => $purchase->id,
                 'batch_code' => $purchase->reference_no . '-' . $product['product_id'],
                 'created_by' => auth()->user()->name ?? 'system',

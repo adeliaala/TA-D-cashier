@@ -14,10 +14,14 @@ class Branch extends Model
         'address',
         'phone',
         'email',
-        'status'
+        'is_active'
     ];
 
     protected $casts = [
-        'status' => 'boolean'
+        'is_active' => 'boolean'
     ];
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
 } 

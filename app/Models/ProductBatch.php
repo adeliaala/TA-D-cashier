@@ -27,6 +27,7 @@ class ProductBatch extends Model
         'exp_date' => 'date',
         'unit_price' => 'decimal:2',
         'price' => 'decimal:2',
+        'qty' => 'integer'
     ];
 
     public function product(): BelongsTo
@@ -63,9 +64,9 @@ class ProductBatch extends Model
     /**
      * Deduct stock from batches using FEFO/FIFO
      */
-    public static function deductStock(int $productId, int $branchId, int $quantity)
+    public static function deductStock(int $productId, int $branchId, int $qty)
     {
-        $remainingQuantity = $quantity;
+        $remainingQuantity = $qty;
         $batches = self::getAvailableStock($productId, $branchId);
         $usedBatches = [];
 
@@ -138,7 +139,7 @@ class ProductBatch extends Model
             if ($remaining <= 0) break;
 
             $take = min($remaining, $batch->qty);
-            $totalPrice += $take * $batch->unit_price;
+            $totalPrice += $take * $batch->price;
             $remaining -= $take;
         }
 
@@ -148,17 +149,26 @@ class ProductBatch extends Model
 
         return round($totalPrice / $qty, 2);
     }
+    public static function getFifoBatch($product_id, $branch_id, $qty = 1)
+{
+    return self::where('product_id', $product_id)
+        ->where('branch_id', $branch_id)
+        ->where('qty', '>=', $qty)
+        ->orderBy('created_at') // FIFO
+        ->first();
+}
+
 
     public static function transferToBranch(int $sourceBatchId, int $destinationBranchId, int $qty, int $userId): ProductBatch
     {
         $sourceBatch = self::lockForUpdate()->findOrFail($sourceBatchId);
 
-        if ($sourceBatch->quantity < $qty) {
+        if ($sourceBatch->qty < $qty) {
             throw new \Exception("Stok tidak cukup pada batch {$sourceBatch->batch_code}");
         }
 
         // Kurangi stok dari batch asal
-        $sourceBatch->quantity -= $qty;
+        $sourceBatch->qty -= $qty;
         $sourceBatch->save();
 
         // Buat batch baru di cabang tujuan
@@ -170,7 +180,7 @@ class ProductBatch extends Model
             'expired_date' => $sourceBatch->expired_date,
             'purchase_id' => $sourceBatch->purchase_id,
             'branch_id' => $destinationBranchId,
-            'quantity' => $qty,
+            'qty' => $qty,
             'created_by' => $userId,
             'updated_by' => $userId,
         ]);

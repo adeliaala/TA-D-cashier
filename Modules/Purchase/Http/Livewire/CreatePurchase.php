@@ -36,6 +36,7 @@ class CreatePurchase extends Component
         'items.*.qty' => 'required|integer|min:1',
         'items.*.price' => 'required|numeric|min:0',
         'items.*.unit_price' => 'required|numeric|min:0',
+        'items.*.exp_date' => 'nullable|date',
         'discount' => 'nullable|numeric|min:0',
         'discount_percentage' => 'nullable|numeric|min:0|max:100',
         'paid_amount' => 'nullable|numeric|min:0',
@@ -84,7 +85,8 @@ class CreatePurchase extends Component
             'unit_price' => 0,
             'discount' => 0,
             'discount_type' => null,
-            'tax' => 0
+            'tax' => 0,
+            'exp_date' => null
         ];
     }
 
@@ -114,8 +116,10 @@ class CreatePurchase extends Component
 
     public function updated($propertyName)
     {
+        // Hanya validasi tanpa menyimpan ke database
         $this->validateOnly($propertyName);
         
+        // Update perhitungan total
         if (str_contains($propertyName, 'items')) {
             $this->calculateTotal();
         }
@@ -199,7 +203,7 @@ class CreatePurchase extends Component
                     'qty' => $item['qty'],
                     'unit_price' => $item['unit_price'],
                     'price' => $item['price'],
-                    'exp_date' => null,
+                    'exp_date' => $item['exp_date'] ?? null,
                     'purchase_id' => $purchase->id,
                     'created_by' => auth()->user()->name ?? 'system',
                     'updated_by' => auth()->user()->name ?? 'system',

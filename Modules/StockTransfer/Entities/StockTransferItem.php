@@ -15,11 +15,16 @@ class StockTransferItem extends Model
         'stock_transfer_id',
         'product_id',
         'product_batch_id',
-        'quantity'
+        'destination_batch_id',
+        'qty',
+        'unit_price',
+        'price'
     ];
 
     protected $casts = [
-        'quantity' => 'integer'
+        'qty' => 'integer',
+        'unit_price' => 'decimal:2',
+        'price' => 'decimal:2'
     ];
 
     public function stockTransfer()

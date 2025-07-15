@@ -15,52 +15,49 @@
             <div style="text-align: center;margin-bottom: 25px;">
                 <img width="180" src="{{ public_path('images/logo-dark.png') }}" alt="Logo">
                 <h4 style="margin-bottom: 20px;">
-                    <span>Reference::</span> <strong>{{ $purchase->reference }}</strong>
+                    <span>Reference:</span> <strong>{{ $purchase->reference }}</strong>
                 </h4>
             </div>
             <div class="card">
                 <div class="card-body">
                     <div class="row mb-4">
                         <div class="col-xs-4 mb-3 mb-md-0">
-                            <h4 class="mb-2" style="border-bottom: 1px solid #dddddd;padding-bottom: 10px;">Company Info:</h4>
-                            <div><strong>{{ settings()->company_name }}</strong></div>
-                            <div>{{ settings()->company_address }}</div>
-                            <div>Email: {{ settings()->company_email }}</div>
-                            <div>Phone: {{ settings()->company_phone }}</div>
+                            <h4 class="mb-2" style="border-bottom: 1px solid #dddddd;padding-bottom: 10px;">Informasi Perusahaan:</h4>
+                            <div style="margin-bottom: 5px;"><strong>{{ settings()->company_name }}</strong></div>
+                            <div style="margin-bottom: 5px;">{{ settings()->company_address }}</div>
+                            <div style="margin-bottom: 5px;">Email: {{ settings()->company_email }}</div>
+                            <div style="margin-bottom: 5px;">Phone: {{ settings()->company_phone }}</div>
                         </div>
 
                         <div class="col-xs-4 mb-3 mb-md-0">
-                            <h4 class="mb-2" style="border-bottom: 1px solid #dddddd;padding-bottom: 10px;">Supplier Info:</h4>
-                            <div><strong>{{ $supplier->supplier_name }}</strong></div>
-                            <div>{{ $supplier->address }}</div>
-                            <div>Email: {{ $supplier->supplier_email }}</div>
-                            <div>Phone: {{ $supplier->supplier_phone }}</div>
+                            <h4 class="mb-2" style="border-bottom: 1px solid #dddddd;padding-bottom: 10px;">Informasi Supplier:</h4>
+                            <div style="margin-bottom: 5px;"><strong>{{ $supplier->supplier_name }}</strong></div>
+                            <div style="margin-bottom: 5px;">{{ $supplier->address }}</div>
+                            <div style="margin-bottom: 5px;">Email: {{ $supplier->supplier_email }}</div>
+                            <div style="margin-bottom: 5px;">Phone: {{ $supplier->supplier_phone }}</div>
                         </div>
 
                         <div class="col-xs-4 mb-3 mb-md-0">
-                            <h4 class="mb-2" style="border-bottom: 1px solid #dddddd;padding-bottom: 10px;">Invoice Info:</h4>
-                            <div>Invoice: <strong>INV/{{ $purchase->reference }}</strong></div>
-                            <div>Date: {{ \Carbon\Carbon::parse($purchase->date)->format('d M, Y') }}</div>
-                            <div>
+                            <h4 class="mb-2" style="border-bottom: 1px solid #dddddd;padding-bottom: 10px;">Informasi Invoice:</h4>
+                            <div style="margin-bottom: 5px;">Invoice: <strong>INV/{{ $purchase->reference }}</strong></div>
+                            <div style="margin-bottom: 5px;">Tanggal: {{ \Carbon\Carbon::parse($purchase->date)->format('d M, Y') }}</div>
+                            <div style="margin-bottom: 5px;">
                                 Status: <strong>{{ $purchase->status }}</strong>
                             </div>
-                            <div>
-                                Payment Status: <strong>{{ $purchase->payment_status }}</strong>
+                            <div style="margin-bottom: 5px;">
+                                Status Pembayaran: <strong>{{ $purchase->payment_status }}</strong>
                             </div>
                         </div>
-
                     </div>
 
                     <div class="table-responsive-sm" style="margin-top: 30px;">
                         <table class="table table-striped">
                             <thead>
                             <tr>
-                                <th class="align-middle">Product</th>
-                                <th class="align-middle">Net Unit Price</th>
-                                <th class="align-middle">Quantity</th>
-                                <th class="align-middle">Discount</th>
-                                <th class="align-middle">Tax</th>
-                                <th class="align-middle">Sub Total</th>
+                                <th class="align-middle" style="width: 40%;">Produk</th>
+                                <th class="align-middle" style="width: 20%;">Harga Satuan</th>
+                                <th class="align-middle" style="width: 20%;">Jumlah</th>
+                                <th class="align-middle" style="width: 20%;">Subtotal</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -69,26 +66,18 @@
                                     <td class="align-middle">
                                         {{ $item->product_name }} <br>
                                         <span class="badge badge-success">
-                                                {{ $item->product_code }}
-                                            </span>
+                                            {{ $item->product_code }}
+                                        </span>
                                     </td>
 
-                                    <td class="align-middle">{{ format_currency($item->unit_price) }}</td>
+                                    <td class="align-middle">{{ format_currency($item->unit_price * 100) }}</td>
 
                                     <td class="align-middle">
-                                        {{ $item->quantity }}
-                                    </td>
-
-                                    <td class="align-middle">
-                                        {{ format_currency($item->product_discount_amount) }}
+                                        {{ $item->qty }}
                                     </td>
 
                                     <td class="align-middle">
-                                        {{ format_currency($item->product_tax_amount) }}
-                                    </td>
-
-                                    <td class="align-middle">
-                                        {{ format_currency($item->sub_total) }}
+                                        {{ format_currency($item->subtotal * 100) }}
                                     </td>
                                 </tr>
                             @endforeach
@@ -100,20 +89,8 @@
                             <table class="table">
                                 <tbody>
                                 <tr>
-                                    <td class="left"><strong>Discount ({{ $purchase->discount_percentage }}%)</strong></td>
-                                    <td class="right">{{ format_currency($purchase->discount_amount) }}</td>
-                                </tr>
-                                <tr>
-                                    <td class="left"><strong>Tax ({{ $purchase->tax_percentage }}%)</strong></td>
-                                    <td class="right">{{ format_currency($purchase->tax_amount) }}</td>
-                                </tr>
-                                <tr>
-                                    <td class="left"><strong>Shipping)</strong></td>
-                                    <td class="right">{{ format_currency($purchase->shipping_amount) }}</td>
-                                </tr>
-                                <tr>
-                                    <td class="left"><strong>Grand Total</strong></td>
-                                    <td class="right"><strong>{{ format_currency($purchase->total_amount) }}</strong></td>
+                                    <td class="left"><strong>Total</strong></td>
+                                    <td class="right"><strong>{{ format_currency($purchase->total * 100) }}</strong></td>
                                 </tr>
                                 </tbody>
                             </table>

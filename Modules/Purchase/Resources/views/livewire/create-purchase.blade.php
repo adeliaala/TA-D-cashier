@@ -68,6 +68,7 @@
 @endpush
 
 <div>
+    <div class="container-fluid mb-4">
     <div class="card">
         <div class="card-header">
             <h3 class="card-title">Create Purchase</h3>
@@ -107,7 +108,7 @@
                     <div class="col-md-4">
                         <div class="form-group">
                             <label>Payment Method</label>
-                            <select class="form-control" wire:model="payment_method">
+                            <select class="form-control" wire:model.live="payment_method">
                                 <option value="">Select Payment Method</option>
                                 <option value="cash">Cash</option>
                                 <option value="transfer">Transfer</option>
@@ -119,14 +120,14 @@
                     <div class="col-md-4">
                         <div class="form-group">
                             <label>Discount Percentage</label>
-                            <input type="number" class="form-control" wire:model="discount_percentage" min="0" max="100" step="0.01">
+                            <input type="number" class="form-control" wire:model.live="discount_percentage" min="0" max="100" step="0.01">
                             @error('discount_percentage') <span class="text-danger">{{ $message }}</span> @enderror
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="form-group">
                             <label>Discount Amount</label>
-                            <input type="number" class="form-control" wire:model="discount" min="0" step="0.01">
+                            <input type="number" class="form-control" wire:model.live="discount" min="0" step="0.01">
                             @error('discount') <span class="text-danger">{{ $message }}</span> @enderror
                         </div>
                     </div>
@@ -153,6 +154,7 @@
                                         <th>Sell Price</th>
                                         <th>Discount</th>
                                         <th>Tax</th>
+                                        <th>Expiry Date</th>
                                         <th>Subtotal</th>
                                         <th>Action</th>
                                     </tr>
@@ -197,6 +199,10 @@
                                                 <input type="number" class="form-control" wire:model="items.{{ $index }}.tax" min="0" step="0.01">
                                             </td>
                                             <td>
+                                                <input type="date" class="form-control" wire:model="items.{{ $index }}.exp_date">
+                                                @error("items.{$index}.exp_date") <span class="text-danger">{{ $message }}</span> @enderror
+                                            </td>
+                                            <td>
                                                 {{ number_format($item['qty'] * $item['unit_price'], 2) }}
                                             </td>
                                             <td>
@@ -236,7 +242,7 @@
                     <div class="col-md-4">
                         <div class="form-group">
                             <label>Paid Amount</label>
-                            <input type="number" class="form-control" wire:model="paid_amount" min="0" step="0.01">
+                            <input type="number" class="form-control" wire:model.live="paid_amount" min="0" step="0.01">
                             @error('paid_amount') <span class="text-danger">{{ $message }}</span> @enderror
                         </div>
                     </div>
@@ -270,6 +276,7 @@
                     </div>
                 </div>
             </form>
+        </div>
         </div>
     </div>
 </div> 

@@ -71,7 +71,7 @@
                             <tr>
                                 <td>{{ $purchase->reference_no }}</td>
                                 <td>{{ $purchase->date->format('d/m/Y') }}</td>
-                                <td>{{ $purchase->supplier->name }}</td>
+                                <td>{{ $purchase->supplier->supplier_name }}</td>
                                 <td>{{ number_format($purchase->total, 2) }}</td>
                                 <td>{{ number_format($purchase->paid_amount, 2) }}</td>
                                 <td>{{ number_format($purchase->due_amount, 2) }}</td>
@@ -80,16 +80,16 @@
                                         {{ $purchase->payment_status }}
                                     </span>
                                 </td>
-                                <td>
-                                    <div class="btn-group">
-                                        <a href="{{ route('purchases.show', $purchase->id) }}" class="btn btn-info btn-sm">
+                                <td class="text-center">
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ route('purchases.show', $purchase->id) }}" class="btn btn-info btn-sm" title="Lihat Detail">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                         @if($purchase->payment_status !== 'Paid')
-                                            <a href="{{ route('purchases.edit', $purchase->id) }}" class="btn btn-primary btn-sm">
+                                            <a href="{{ route('purchases.edit', $purchase->id) }}" class="btn btn-primary btn-sm" title="Edit">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            <button wire:click="deletePurchase({{ $purchase->id }})" class="btn btn-danger btn-sm" onclick="confirm('Are you sure?') || event.stopImmediatePropagation()">
+                                            <button type="button" wire:click="deletePurchase({{ $purchase->id }})" class="btn btn-danger btn-sm" title="Hapus">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         @endif
@@ -98,7 +98,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="text-center">No purchases found.</td>
+                                <td colspan="8" class="text-center">Tidak ada data pembelian.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -129,4 +129,27 @@
             </button>
         </div>
     @endif
-</div> 
+</div>
+
+@push('scripts')
+<script>
+    document.addEventListener('livewire:init', function () {
+        Livewire.on('deletePurchase', function(id) {
+            Swal.fire({
+                title: 'Apakah Anda yakin?',
+                text: "Data pembelian yang dihapus tidak dapat dikembalikan!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Ya, hapus!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Livewire.dispatch('confirmDelete', { id: id });
+                }
+            });
+        });
+    });
+</script>
+@endpush 

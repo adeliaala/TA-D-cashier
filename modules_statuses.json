@@ -12,7 +12,7 @@
     "SaleReturn": true,
     "SalesReturn": true,
     "PurchasesReturn": true,
-    "Quotation": true,
+    "Quotation": false,
     "Reports": true,
     "Branch": true,
     "StockTransfer": true

@@ -62,11 +62,11 @@
                             <table class="table table-striped">
                                 <thead>
                                 <tr>
-                                    <th class="align-middle">Product</th>
-                                    <th class="align-middle">Net Unit Price</th>
-                                    <th class="align-middle">Quantity</th>
-                                    <th class="align-middle">Discount</th>
-                                    <th class="align-middle">Tax</th>
+                                    <th class="align-middle">Produk</th>
+                                    <th class="align-middle">Harga Satuan</th>
+                                    <th class="align-middle">Jumlah</th>
+                                    <th class="align-middle">Diskon</th>
+                                    <th class="align-middle">Pajak</th>
                                     <th class="align-middle">Sub Total</th>
                                 </tr>
                                 </thead>
@@ -80,7 +80,7 @@
                                             </span>
                                         </td>
 
-                                        <td class="align-middle">{{ format_currency($item->unit_price) }}</td>
+                                        <td class="align-middle">{{ format_currency($item->price*100) }}</td>
 
                                         <td class="align-middle">
                                             {{ $item->quantity }}
@@ -88,6 +88,10 @@
 
                                         <td class="align-middle">
                                             {{ format_currency($item->product_discount_amount) }}
+                                            @if($item->product_discount_type)
+                                                <br>
+                                                <small class="text-muted">({{ $item->product_discount_type }})</small>
+                                            @endif
                                         </td>
 
                                         <td class="align-middle">
@@ -95,7 +99,7 @@
                                         </td>
 
                                         <td class="align-middle">
-                                            {{ format_currency($item->sub_total) }}
+                                            {{ format_currency($item->sub_total*100) }}
                                         </td>
                                     </tr>
                                 @endforeach
@@ -114,10 +118,10 @@
                                         <td class="left"><strong>Tax ({{ $sale->tax_percentage }}%)</strong></td>
                                         <td class="right">{{ format_currency($sale->tax_amount) }}</td>
                                     </tr>
-                                    <tr>
+                                    {{-- <tr>
                                         <td class="left"><strong>Shipping</strong></td>
                                         <td class="right">{{ format_currency($sale->shipping_amount) }}</td>
-                                    </tr>
+                                    </tr> --}}
                                     <tr>
                                         <td class="left"><strong>Grand Total</strong></td>
                                         <td class="right"><strong>{{ format_currency($sale->total_amount) }}</strong></td>

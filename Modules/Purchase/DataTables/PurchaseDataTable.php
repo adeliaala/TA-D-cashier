@@ -30,7 +30,7 @@ class PurchaseDataTable extends DataTable
                 'purchases.paid_amount',
                 'purchases.due_amount',
                 'purchases.payment_status',
-                'suppliers.name as supplier_name'
+                'suppliers.supplier_name as supplier_name'
             ])
             ->leftJoin('suppliers', 'purchases.supplier_id', '=', 'suppliers.id')
             ->get();
@@ -66,27 +66,12 @@ class PurchaseDataTable extends DataTable
 
     public function query(Purchase $model)
     {
-        // Cek semua data purchase yang ada
-        $allPurchases = DB::table('purchases')->get();
-        Log::info('All Purchases from DB', [
-            'count' => $allPurchases->count(),
-            'data' => $allPurchases->take(3)->toArray()
-        ]);
+        $branch_id = session('branch_id');
         
-        // Periksa struktur tabel
-        $columns = DB::getSchemaBuilder()->getColumnListing('purchases');
-        Log::info('Purchases Table Columns', [
-            'columns' => $columns
-        ]);
-        
-        $activeBranch = session('active_branch');
-        
-        Log::info('Active Branch', [
-            'branch_id' => $activeBranch
-        ]);
-        
-        // Kita tidak menggunakan query ini karena menggunakan DB query langsung di dataTable()
-        $query = $model->newQuery();
+        $query = $model->newQuery()
+            ->when($branch_id, function($q) use ($branch_id) {
+                return $q->where('branch_id', $branch_id);
+            });
         
         return $query;
     }
@@ -103,17 +88,13 @@ class PurchaseDataTable extends DataTable
             ->orderBy(0)
             ->buttons(
                 Button::make('excel')
-                    ->text('<i class="bi bi-file-earmark-excel-fill"></i> Excel')
-                    ->className('btn btn-success btn-sm no-corner'),
+                    ->text('<i class="bi bi-file-earmark-excel-fill"></i> Excel'),
                 Button::make('print')
-                    ->text('<i class="bi bi-printer-fill"></i> Print')
-                    ->className('btn btn-primary btn-sm no-corner'),
+                    ->text('<i class="bi bi-printer-fill"></i> Print'),
                 Button::make('reset')
-                    ->text('<i class="bi bi-x-circle"></i> Reset')
-                    ->className('btn btn-warning btn-sm no-corner'),
+                    ->text('<i class="bi bi-x-circle"></i> Reset'),
                 Button::make('reload')
                     ->text('<i class="bi bi-arrow-repeat"></i> Reload')
-                    ->className('btn btn-info btn-sm no-corner')
             );
     }
 

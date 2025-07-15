@@ -17,21 +17,32 @@
                     <tr class="align-middle">
                         <th class="align-middle">Product Name</th>
                         <th class="align-middle">Code</th>
+                        <th class="align-middle">Batch</th>
                         <th class="align-middle">
-                            Quantity <i class="bi bi-question-circle-fill text-info" data-toggle="tooltip" data-placement="top" title="Max Quantity: 100"></i>
+                            Quantity <i class="bi bi-question-circle-fill text-info" data-toggle="tooltip" data-placement="top" title="Max Quantity: {{ $maxQuantity }}"></i>
                         </th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr>
-                        @if(!empty($product))
-                            <td class="align-middle">{{ $product->product_name }}</td>
-                            <td class="align-middle">{{ $product->product_code }}</td>
+                        @if($product)
+                            <td class="align-middle">{{ $product['product_name'] }}</td>
+                            <td class="align-middle">{{ $product['product_code'] }}</td>
+                            <td class="align-middle">
+                                <select wire:model.live="selectedBatchId" class="form-control">
+                                    <option value="">Select Batch</option>
+                                    @foreach($batches as $batch)
+                                        <option value="{{ $batch->id }}">
+                                            {{ $batch->batch_code ?? '-' }} | Qty: {{ $batch->qty }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </td>
                             <td class="align-middle text-center" style="width: 200px;">
-                                <input wire:model.live="quantity" class="form-control" type="number" min="1" max="100" value="{{ $quantity }}">
+                                <input wire:model.live="quantity" class="form-control" type="number" min="1" max="{{ $maxQuantity }}" value="{{ $quantity }}">
                             </td>
                         @else
-                            <td colspan="3" class="text-center">
+                            <td colspan="4" class="text-center">
                                 <span class="text-danger">Please search & select a product!</span>
                             </td>
                         @endif
@@ -40,9 +51,11 @@
                 </table>
             </div>
             <div class="mt-3">
-                <button wire:click="generateBarcodes({{ $product }}, {{ $quantity }})" type="button" class="btn btn-primary">
-                    <i class="bi bi-upc-scan"></i> Generate Barcodes
-                </button>
+                @if($product && $selectedBatchId)
+                    <button wire:click="generateBarcodes({{ $selectedBatchId }}, {{ $quantity }})" type="button" class="btn btn-primary">
+                        <i class="bi bi-upc-scan"></i> Generate Barcodes
+                    </button>
+                @endif
             </div>
         </div>
     </div>
@@ -68,13 +81,13 @@
                     @foreach($barcodes as $barcode)
                         <div class="col-lg-3 col-md-4 col-sm-6" style="border: 1px solid #ffffff;border-style: dashed;background-color: #48FCFE;">
                             <p class="mt-3 mb-1" style="font-size: 15px;color: #000;">
-                                {{ $product->product_name }}
+                                {{ $product['product_name'] }}
                             </p>
                             <div>
-                                {!! $barcode !!}
+                                {!! $barcode['barcode'] !!}
                             </div>
                             <p style="font-size: 15px;color: #000;">
-                                Price:: {{ format_currency($product->product_price) }}
+                                Price:: {{ format_currency($barcode['price']) }}
                             </p>
                         </div>
                     @endforeach

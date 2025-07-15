@@ -34,10 +34,15 @@ class PurchaseList extends Component
 
     public function deletePurchase($id)
     {
+        $this->dispatch('deletePurchase', id: $id);
+    }
+
+    public function confirmDelete($id)
+    {
         $purchase = Purchase::findOrFail($id);
         
         if ($purchase->payment_status === 'Paid') {
-            session()->flash('error', 'Cannot delete a paid purchase.');
+            session()->flash('error', 'Tidak dapat menghapus pembelian yang sudah dibayar.');
             return;
         }
 
@@ -52,20 +57,21 @@ class PurchaseList extends Component
             $purchase->delete();
             
             DB::commit();
-            session()->flash('message', 'Purchase deleted successfully.');
+            session()->flash('message', 'Pembelian berhasil dihapus.');
         } catch (\Exception $e) {
             DB::rollBack();
-            session()->flash('error', 'Error deleting purchase: ' . $e->getMessage());
+            session()->flash('error', 'Error menghapus pembelian: ' . $e->getMessage());
         }
     }
 
     public function render()
     {
         $purchases = Purchase::query()
+            ->with(['supplier', 'purchaseDetails', 'purchasePayments'])
             ->when($this->search, function ($query) {
                 $query->where('reference_no', 'like', '%' . $this->search . '%')
                     ->orWhereHas('supplier', function ($q) {
-                        $q->where('name', 'like', '%' . $this->search . '%');
+                        $q->where('supplier_name', 'like', '%' . $this->search . '%');
                     });
             })
             ->when($this->dateFrom, function ($query) {

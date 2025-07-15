@@ -15,7 +15,7 @@
     <div wire:loading.flex class="col-12 position-absolute justify-content-center align-items-center"
          style="top:0;right:0;left:0;bottom:0;background-color: rgba(255,255,255,0.5);z-index: 99;">
         <div class="spinner-border text-primary" role="status">
-            <span class="sr-only">Loading...</span>
+            <span class="sr-only">Memuat...</span>
         </div>
     </div>
 
@@ -25,13 +25,13 @@
             <thead>
                 <tr class="align-middle text-center">
                     <th>#</th>
-                    <th>Product Name</th>
-                    <th>Code</th>
+                    <th>Nama Produk</th>
+                    <th>Kode</th>
                     <th>Batch</th>
-                    <th>Stock</th>
-                    <th>Quantity</th>
-                    <th>Type</th>
-                    <th>Action</th>
+                    <th>Stok</th>
+                    <th>Jumlah</th>
+                    <th>Jenis</th>
+                    <th>Aksi</th>
                 </tr>
             </thead>
             <tbody>
@@ -81,8 +81,8 @@
                             {{-- Type Select --}}
                             <td class="align-middle">
                                 <select name="types[]" class="form-control">
-                                    <option value="add" {{ ($product['type'] ?? '') === 'add' ? 'selected' : '' }}>(+) Addition</option>
-                                    <option value="sub" {{ ($product['type'] ?? '') === 'sub' ? 'selected' : '' }}>(-) Subtraction</option>
+                                    <option value="add" {{ ($product['type'] ?? '') === 'add' ? 'selected' : '' }}>(+) Penambahan</option>
+                                    <option value="sub" {{ ($product['type'] ?? '') === 'sub' ? 'selected' : '' }}>(-) Pengurangan</option>
                                 </select>
                             </td>
 
@@ -91,7 +91,7 @@
 
                             {{-- Action Button --}}
                             <td class="align-middle text-center">
-                                <button type="button" class="btn btn-danger" wire:click="removeProduct({{ $key }})">
+                                <button type="button" class="btn btn-danger" wire:click="removeProduct({{ $key }})" title="Hapus Produk">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </td>
@@ -100,7 +100,7 @@
                 @else
                     <tr>
                         <td colspan="8" class="text-center">
-                            <span class="text-danger">Please search & select products!</span>
+                            <span class="text-danger">Silakan cari & pilih produk!</span>
                         </td>
                     </tr>
                 @endif

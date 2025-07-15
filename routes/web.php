@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Adjustment\Http\Controllers\AdjustmentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,5 +27,8 @@ Route::group(['middleware' => 'auth'], function () {
 
     Route::get('/payment-flow/chart-data', 'HomeController@paymentChart')
         ->name('payment-flow.chart');
+
+    Route::post('/adjustments/quick', [AdjustmentController::class, 'quickAdjustment'])->name('adjustments.quick');
+
 });
 

@@ -1,21 +1,21 @@
 <div class="btn-group">
-    <a href="{{ route('purchases.show', $id) }}" class="btn btn-info btn-sm">
-        <i class="fas fa-eye"></i>
+    <a href="{{ route('purchases.show', $id) }}" class="btn btn-info btn-sm" data-toggle="tooltip" title="Lihat Detail">
+        <i class="bi bi-eye"></i>
     </a>
-    <a href="{{ route('purchases.edit', $id) }}" class="btn btn-primary btn-sm">
-        <i class="fas fa-edit"></i>
+    <a href="{{ route('purchases.edit', $id) }}" class="btn btn-primary btn-sm" data-toggle="tooltip" title="Edit">
+        <i class="bi bi-pencil"></i>
     </a>
-    <a href="{{ route('purchases.pdf', $id) }}" class="btn btn-secondary btn-sm" target="_blank">
-        <i class="fas fa-print"></i>
+    <a href="{{ route('purchases.pdf', $id) }}" class="btn btn-secondary btn-sm" target="_blank" data-toggle="tooltip" title="Cetak PDF">
+        <i class="bi bi-file-earmark-pdf"></i>
     </a>
-    <button type="button" class="btn btn-danger btn-sm" onclick="deletePurchase({{ $id }})">
-        <i class="fas fa-trash"></i>
+    <button type="button" class="btn btn-danger btn-sm" onclick="deletePurchase({{ $id }})" data-toggle="tooltip" title="Hapus">
+        <i class="bi bi-trash"></i>
     </button>
 </div>
 
 <script>
     function deletePurchase(id) {
-        if (confirm('Are you sure you want to delete this purchase?')) {
+        if (confirm('Apakah Anda yakin ingin menghapus pembelian ini?')) {
             $.ajax({
                 url: `/purchases/${id}`,
                 type: 'DELETE',
@@ -31,9 +31,14 @@
                     }
                 },
                 error: function(error) {
-                    toastr.error('An error occurred while deleting the purchase.');
+                    toastr.error('Terjadi kesalahan saat menghapus pembelian.');
                 }
             });
         }
     }
+
+    // Inisialisasi tooltip
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+    });
 </script>

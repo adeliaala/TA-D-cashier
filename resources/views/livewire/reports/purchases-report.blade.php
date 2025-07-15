@@ -7,22 +7,34 @@
                         <div class="form-row">
                             <div class="col-lg-4">
                                 <div class="form-group">
-                                    <label>Start Date <span class="text-danger">*</span></label>
-                                    <input wire:model="start_date" type="date" class="form-control" name="start_date">
-                                    @error('start_date')
+                                    <label>Month <span class="text-danger">*</span></label>
+                                    <select wire:model="month" class="form-control" name="month">
+                                        <option value="">Select Month</option>
+                                        @for ($m = 1; $m <= 12; $m++)
+                                            <option value="{{ $m }}">{{ date('F', mktime(0, 0, 0, $m, 1)) }}</option>
+                                        @endfor
+                                    </select>
+                                    @error('month')
                                     <span class="text-danger mt-1">{{ $message }}</span>
                                     @enderror
                                 </div>
                             </div>
+
                             <div class="col-lg-4">
                                 <div class="form-group">
-                                    <label>End Date <span class="text-danger">*</span></label>
-                                    <input wire:model="end_date" type="date" class="form-control" name="end_date">
-                                    @error('end_date')
+                                    <label>Year <span class="text-danger">*</span></label>
+                                    <select wire:model="year" class="form-control" name="year">
+                                        <option value="">Select Year</option>
+                                        @for ($y = now()->year; $y >= 2020; $y--)
+                                            <option value="{{ $y }}">{{ $y }}</option>
+                                        @endfor
+                                    </select>
+                                    @error('year')
                                     <span class="text-danger mt-1">{{ $message }}</span>
                                     @enderror
                                 </div>
                             </div>
+
                             <div class="col-lg-4">
                                 <div class="form-group">
                                     <label>Supplier</label>
@@ -35,6 +47,7 @@
                                 </div>
                             </div>
                         </div>
+
                         <div class="form-row">
                             <div class="col-lg-6">
                                 <div class="form-group">
@@ -47,6 +60,7 @@
                                     </select>
                                 </div>
                             </div>
+
                             <div class="col-lg-6">
                                 <div class="form-group">
                                     <label>Payment Status</label>
@@ -59,6 +73,7 @@
                                 </div>
                             </div>
                         </div>
+
                         <div class="form-group mb-0">
                             <button type="submit" class="btn btn-primary">
                                 <span wire:target="generateReport" wire:loading class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>

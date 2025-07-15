@@ -4,59 +4,85 @@ namespace App\Livewire\Barcode;
 
 use Livewire\Component;
 use Milon\Barcode\Facades\DNS1DFacade;
-use Modules\Product\Entities\Product;
+use App\Models\ProductBatch;
 
 class ProductTable extends Component
 {
-    public $product;
-    public $quantity;
-    public $barcodes;
+    public $productBatchId;
+    public $quantity = 1;
+    public $barcodes = [];
+    public $product = null;
+    public $selectedBatchId = null;
+    public $batches = [];
+    public $maxQuantity = 0;
 
     protected $listeners = ['productSelected'];
 
-    public function mount() {
-        $this->product = '';
-        $this->quantity = 0;
-        $this->barcodes = [];
+    public function mount()
+    {
+        $this->product = null;
+        $this->batches = [];
+        $this->selectedBatchId = null;
+        $this->maxQuantity = 0;
     }
 
-    public function render() {
-        return view('livewire.barcode.product-table');
-    }
-
-    public function productSelected(Product $product) {
+    public function productSelected($product)
+    {
         $this->product = $product;
-        $this->quantity = 1;
-        $this->barcodes = [];
+        $this->batches = ProductBatch::where('product_id', $product['id'])
+            ->where('qty', '>', 0)
+            ->get();
+        $this->selectedBatchId = $this->batches->first()?->id;
+        $this->updateMaxQuantity();
     }
 
-    public function generateBarcodes(Product $product, $quantity) {
-        if ($quantity > 100) {
-            return session()->flash('message', 'Max quantity is 100 per barcode generation!');
-        }
-
-        if (!is_numeric($product->product_code)) {
-            return session()->flash('message', 'Can not generate Barcode with this type of Product Code');
-        }
-
-        $this->barcodes = [];
-
-        for ($i = 1; $i <= $quantity; $i++) {
-            $barcode = DNS1DFacade::getBarCodeSVG($product->product_code, $product->product_barcode_symbology,2 , 60, 'black', false);
-            array_push($this->barcodes, $barcode);
+    public function updatedSelectedBatchId()
+    {
+        $this->updateMaxQuantity();
+        if ($this->quantity > $this->maxQuantity) {
+            $this->quantity = $this->maxQuantity;
         }
     }
 
-    public function getPdf() {
-        $pdf = \PDF::loadView('product::barcode.print', [
-            'barcodes' => $this->barcodes,
-            'price' => $this->product->product_price,
-            'name' => $this->product->product_name,
-        ]);
-        return $pdf->stream('barcodes-'. $this->product->product_code .'.pdf');
+    protected function updateMaxQuantity()
+    {
+        if ($this->selectedBatchId) {
+            $batch = $this->batches->firstWhere('id', $this->selectedBatchId);
+            $this->maxQuantity = $batch ? $batch->qty : 0;
+        } else {
+            $this->maxQuantity = 0;
+        }
     }
 
-    public function updatedQuantity() {
+    public function generateBarcodes($productBatchId, $quantity)
+    {
+        if ($quantity > $this->maxQuantity) {
+            session()->flash('message', 'Quantity exceeds available stock!');
+            return;
+        }
+
+        $batch = ProductBatch::with('product')->findOrFail($productBatchId);
+
         $this->barcodes = [];
+
+        for ($i = 0; $i < $quantity; $i++) {
+            $barcode = DNS1DFacade::getBarcodeHTML($batch->product->product_code, 'C128');
+
+            $this->barcodes[] = [
+                'name' => $batch->product->product_name,
+                'barcode' => $barcode,
+                'price' => $batch->price,
+            ];
+        }
+    }
+    
+    public function getPdf()
+    {
+        // Logika PDF generation di sini jika diperlukan
+    }
+
+    public function render()
+    {
+        return view('livewire.barcode.product-table');
     }
 }

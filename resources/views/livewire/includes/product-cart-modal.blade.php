@@ -24,32 +24,32 @@
                         <div class="alert alert-success alert-dismissible fade show" role="alert">
                             <div class="alert-body">
                                 <span>{{ session('discount_message' . $cart_item->id) }}</span>
-                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Tutup">
                                     <span aria-hidden="true">×</span>
                                 </button>
                             </div>
                         </div>
                     @endif
                     <div class="form-group">
-                        <label>Discount Type <span class="text-danger">*</span></label>
+                        <label>Jenis Diskon <span class="text-danger">*</span></label>
                         <select wire:model.live="discount_type.{{ $cart_item->id }}" class="form-control" required>
-                            <option value="fixed">Fixed</option>
-                            <option value="percentage">Percentage</option>
+                            <option value="fixed">Nominal</option>
+                            <option value="percentage">Persentase</option>
                         </select>
                     </div>
                     <div class="form-group">
                         @if($discount_type[$cart_item->id] == 'percentage')
-                            <label>Discount(%) <span class="text-danger">*</span></label>
+                            <label>Diskon(%) <span class="text-danger">*</span></label>
                             <input wire:model="item_discount.{{ $cart_item->id }}" type="number" class="form-control" value="{{ $item_discount[$cart_item->id] }}" min="0" max="100">
                         @elseif($discount_type[$cart_item->id] == 'fixed')
-                            <label>Discount <span class="text-danger">*</span></label>
+                            <label>Diskon <span class="text-danger">*</span></label>
                             <input wire:model="item_discount.{{ $cart_item->id }}" type="number" class="form-control" value="{{ $item_discount[$cart_item->id] }}">
                         @endif
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button wire:click="setProductDiscount('{{ $cart_item->rowId }}', {{ $cart_item->id }})" type="button" class="btn btn-primary">Save changes</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+                    <button wire:click="setProductDiscount('{{ $cart_item->rowId }}', {{ $cart_item->id }})" type="button" class="btn btn-primary">Simpan Perubahan</button>
                 </div>
             </div>
         </div>

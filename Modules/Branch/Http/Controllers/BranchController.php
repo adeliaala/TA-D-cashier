@@ -5,6 +5,7 @@ namespace Modules\Branch\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Modules\Branch\Entities\Branch;
+use App\Models\User;
 
 class BranchController extends Controller
 {
@@ -35,7 +36,7 @@ class BranchController extends Controller
             'address' => 'required|string',
             'phone' => 'required|string|max:20',
             'email' => 'required|email|max:255',
-            'status' => 'required|boolean'
+            'is_active' => 'required|boolean'
         ]);
 
         Branch::create($request->all());
@@ -70,7 +71,7 @@ class BranchController extends Controller
             'address' => 'required|string',
             'phone' => 'required|string|max:20',
             'email' => 'required|email|max:255',
-            'status' => 'required|boolean'
+            'is_active' => 'required|boolean',
         ]);
 
         $branch->update($request->all());

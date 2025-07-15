@@ -9,7 +9,7 @@
         $branch = Branch::find(session('branch_id'));
     @endphp
 
-    <form action="{{ route('stock-transfers.store') }}" method="POST">
+    <form action="{{ route('stocktransfers.store') }}" method="POST">
         @csrf
         <div class="row">
             <div class="col-md-12 mb-3">

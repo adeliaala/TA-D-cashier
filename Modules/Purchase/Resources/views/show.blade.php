@@ -80,10 +80,10 @@
                                             </span>
                                         </td>
 
-                                        <td class="align-middle">{{ format_currency($item->unit_price) }}</td>
+                                        <td class="align-middle">{{ format_currency($item->unit_price*100) }}</td>
 
                                         <td class="align-middle">
-                                            {{ $item->quantity }}
+                                            {{ $item->qty }}
                                         </td>
 
                                         <td class="align-middle">
@@ -95,7 +95,7 @@
                                         </td>
 
                                         <td class="align-middle">
-                                            {{ format_currency($item->sub_total) }}
+                                            {{ format_currency($item->sub_total*100) }}
                                         </td>
                                     </tr>
                                 @endforeach

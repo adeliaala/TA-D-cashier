@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Carbon;
 use App\Models\Branch;
 use App\Models\ProductBatch;
+use App\Models\User;
 
 class StockTransfer extends Model
 {
@@ -24,7 +25,7 @@ class StockTransfer extends Model
     ];
 
     protected $casts = [
-        'transfer_date' => 'date'
+        'transfer_date' => 'datetime'
     ];
 
     public function sourceBranch()
@@ -40,6 +41,16 @@ class StockTransfer extends Model
     public function items()
     {
         return $this->hasMany(StockTransferItem::class);
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updater()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
     }
 
     public function getTransferDateAttribute($value)

@@ -7,22 +7,53 @@
                         <div class="form-row">
                             <div class="col-lg-4">
                                 <div class="form-group">
-                                    <label>Start Date <span class="text-danger">*</span></label>
-                                    <input wire:model="start_date" type="date" class="form-control" name="start_date">
-                                    @error('start_date')
+                                    <label>Month <span class="text-danger">*</span></label>
+                                    <select wire:model="month" class="form-control" name="month">
+                                        <option value="">Select Month</option>
+                                        <option value="1">January</option>
+                                        <option value="2">February</option>
+                                        <option value="3">March</option>
+                                        <option value="4">April</option>
+                                        <option value="5">May</option>
+                                        <option value="6">June</option>
+                                        <option value="7">July</option>
+                                        <option value="8">August</option>
+                                        <option value="9">September</option>
+                                        <option value="10">October</option>
+                                        <option value="11">November</option>
+                                        <option value="12">December</option>
+                                    </select>
+                                    @error('month')
                                     <span class="text-danger mt-1">{{ $message }}</span>
                                     @enderror
                                 </div>
                             </div>
                             <div class="col-lg-4">
                                 <div class="form-group">
-                                    <label>End Date <span class="text-danger">*</span></label>
-                                    <input wire:model="end_date" type="date" class="form-control" name="end_date">
-                                    @error('end_date')
+                                    <label>Year <span class="text-danger">*</span></label>
+                                    <select wire:model="year" class="form-control" name="year">
+                                        <option value="">Select Year</option>
+                                        @for($year = now()->year; $year >= 2025; $year--)
+                                            <option value="{{ $year }}">{{ $year }}</option>
+                                        @endfor
+                                    </select>
+                                    @error('year')
                                     <span class="text-danger mt-1">{{ $message }}</span>
                                     @enderror
                                 </div>
                             </div>
+                            <div class="col-lg-4">
+                                <div class="form-group">
+                                    <label>Customer Type</label>
+                                    <select wire:model="customer_type" class="form-control" name="customer_type">
+                                        <option value="">Select Customer Type</option>
+                                        <option value="walk_in">Walk-in Customer</option>
+                                        <option value="member">Member</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
                             <div class="col-lg-4">
                                 <div class="form-group">
                                     <label>Customer</label>
@@ -34,9 +65,7 @@
                                     </select>
                                 </div>
                             </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="col-lg-6">
+                            <div class="col-lg-4">
                                 <div class="form-group">
                                     <label>Status</label>
                                     <select wire:model="sale_status" class="form-control" name="sale_status">
@@ -47,7 +76,7 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-lg-6">
+                            <div class="col-lg-4">
                                 <div class="form-group">
                                     <label>Payment Status</label>
                                     <select wire:model="payment_status" class="form-control" name="payment_status">

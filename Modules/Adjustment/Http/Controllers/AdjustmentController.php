@@ -175,4 +175,56 @@ class AdjustmentController extends Controller
 
         return redirect()->route('adjustments.index');
     }
+
+    public function quickAdjustment(Request $request)
+{
+    abort_if(Gate::denies('create_adjustments'), 403);
+
+    $request->validate([
+        'product_id' => 'required|exists:products,id',
+        'product_batch_id' => 'required|exists:product_batches,id',
+        'quantity' => 'required|numeric|min:1',
+        'type' => 'required|in:add,sub',
+        'note' => 'nullable|string|max:1000',
+    ]);
+
+    DB::transaction(function () use ($request) {
+        $adjustment = Adjustment::create([
+            'branches_id' => session('branch_id'),
+            'date' => now(),
+            'note' => $request->note ?? 'Auto adjustment dari dashboard'
+        ]);
+
+        AdjustedProduct::create([
+            'adjustment_id' => $adjustment->id,
+            'product_id' => $request->product_id,
+            'product_batch_id' => $request->product_batch_id,
+            'quantity' => $request->quantity,
+            'type' => $request->type
+        ]);
+
+        $batch = DB::table('product_batches')->where('id', $request->product_batch_id)->lockForUpdate()->first();
+
+        if ($batch) {
+            $newQty = $batch->qty;
+
+            if ($request->type == 'add') {
+                $newQty += $request->quantity;
+            } elseif ($request->type == 'sub') {
+                $newQty -= $request->quantity;
+                if ($newQty < 0) {
+                    throw new \Exception("Stok tidak cukup untuk batch {$batch->batch_code}.");
+                }
+            }
+
+            DB::table('product_batches')->where('id', $request->product_batch_id)->update([
+                'qty' => $newQty
+            ]);
+        }
+    });
+
+    toast('Stok berhasil dikurangi melalui dashboard.', 'success');
+    return redirect()->back();
+}
+
 }

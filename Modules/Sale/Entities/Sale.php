@@ -48,20 +48,27 @@ class Sale extends Model
     }
 
     public function getPaidAmountAttribute($value) {
-        return $value / 100;
+        return $value ;
     }
 
     public function getTotalAmountAttribute($value) {
-        return $value / 100;
+        return $value ;
     }
 
     public function getDueAmountAttribute($value) {
-        return $value / 100;
+        return $value ;
     }
 
     public function getDiscountAmountAttribute($value) {
-        return $value / 100;
+        return $value ;
     }
-
+    public function branch()
+    {
+        return $this->belongsTo(\Modules\Branch\Entities\Branch::class);
+    }
     
+    public function customer()
+    {
+        return $this->belongsTo(\Modules\People\Entities\Customer::class);
+    }
 }

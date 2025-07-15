@@ -49,24 +49,21 @@ class ProductController extends Controller
 
 
     public function show(Product $product)
-{
-    abort_if(Gate::denies('show_products'), 403);
+    {
+        abort_if(Gate::denies('show_products'), 403);
 
-    // Load relasi yang dibutuhkan
-    $product->load([
-        'category',
-        'batches' => function ($q) {
-            $q->where('qty', '>', 0)
-              ->orderBy('exp_date', 'asc'); // FIFO
-        }
-    ]);
+        // Load relasi yang dibutuhkan
+        $product->load([
+            'category',
+            'batches' => function ($q) {
+                $q->where('qty', '>', 0)
+                  ->orderBy('exp_date', 'asc')
+                  ->with('branch'); // Tambahkan eager loading untuk branch
+            }
+        ]);
 
-    return view('product::products.show', compact('product'));
-}
-
-
-    
-
+        return view('product::products.show', compact('product'));
+    }
 
 
     public function edit(Product $product)

@@ -73,7 +73,7 @@
                                             </span>
                                     </td>
 
-                                    <td class="align-middle">{{ format_currency($item->unit_price) }}</td>
+                                    <td class="align-middle">{{ format_currency($item->unit_price*100) }}</td>
 
                                     <td class="align-middle">
                                         {{ $item->quantity }}
@@ -88,7 +88,7 @@
                                     </td>
 
                                     <td class="align-middle">
-                                        {{ format_currency($item->sub_total) }}
+                                        {{ format_currency($item->sub_total*100) }}
                                     </td>
                                 </tr>
                             @endforeach
@@ -107,10 +107,10 @@
                                     <td class="left"><strong>Tax ({{ $sale->tax_percentage }}%)</strong></td>
                                     <td class="right">{{ format_currency($sale->tax_amount) }}</td>
                                 </tr>
-                                <tr>
+                                {{-- <tr>
                                     <td class="left"><strong>Shipping</strong></td>
                                     <td class="right">{{ format_currency($sale->shipping_amount) }}</td>
-                                </tr>
+                                </tr> --}}
                                 <tr>
                                     <td class="left"><strong>Grand Total</strong></td>
                                     <td class="right"><strong>{{ format_currency($sale->total_amount) }}</strong></td>

@@ -85,20 +85,20 @@
 @endcan
 
 @can('access_stock_transfers')
-    <li class="c-sidebar-nav-item c-sidebar-nav-dropdown {{ request()->routeIs('stock-transfers.*') ? 'c-show' : '' }}">
+    <li class="c-sidebar-nav-item c-sidebar-nav-dropdown {{ request()->routeIs('stocktransfers.*') ? 'c-show' : '' }}">
         <a class="c-sidebar-nav-link c-sidebar-nav-dropdown-toggle" href="#">
             <i class="c-sidebar-nav-icon bi bi-arrow-left-right" style="line-height: 1;"></i> Stock Transfers
         </a>
         <ul class="c-sidebar-nav-dropdown-items">
             @can('create_stock_transfers')
                 <li class="c-sidebar-nav-item">
-                    <a class="c-sidebar-nav-link {{ request()->routeIs('stock-transfers.create') ? 'c-active' : '' }}" href="{{ route('stock-transfers.create') }}">
+                    <a class="c-sidebar-nav-link {{ request()->routeIs('stocktransfers.create') ? 'c-active' : '' }}" href="{{ route('stocktransfers.create') }}">
                         <i class="c-sidebar-nav-icon bi bi-journal-plus" style="line-height: 1;"></i> Create Transfer
                     </a>
                 </li>
             @endcan
             <li class="c-sidebar-nav-item">
-                <a class="c-sidebar-nav-link {{ request()->routeIs('stock-transfers.index') ? 'c-active' : '' }}" href="{{ route('stock-transfers.index') }}">
+                <a class="c-sidebar-nav-link {{ request()->routeIs('stocktransfers.index') ? 'c-active' : '' }}" href="{{ route('stocktransfers.index') }}">
                     <i class="c-sidebar-nav-icon bi bi-journals" style="line-height: 1;"></i> All Transfers
                 </a>
             </li>
@@ -106,27 +106,8 @@
     </li>
 @endcan
 
-@can('access_quotations')
-    <li class="c-sidebar-nav-item c-sidebar-nav-dropdown {{ request()->routeIs('quotations.*') ? 'c-show' : '' }}">
-        <a class="c-sidebar-nav-link c-sidebar-nav-dropdown-toggle" href="#">
-            <i class="c-sidebar-nav-icon bi bi-cart-check" style="line-height: 1;"></i> Quotations
-        </a>
-        <ul class="c-sidebar-nav-dropdown-items">
-            @can('create_adjustments')
-                <li class="c-sidebar-nav-item">
-                    <a class="c-sidebar-nav-link {{ request()->routeIs('quotations.create') ? 'c-active' : '' }}" href="{{ route('quotations.create') }}">
-                        <i class="c-sidebar-nav-icon bi bi-journal-plus" style="line-height: 1;"></i> Create Quotation
-                    </a>
-                </li>
-            @endcan
-            <li class="c-sidebar-nav-item">
-                <a class="c-sidebar-nav-link {{ request()->routeIs('quotations.index') ? 'c-active' : '' }}" href="{{ route('quotations.index') }}">
-                    <i class="c-sidebar-nav-icon bi bi-journals" style="line-height: 1;"></i> All Quotations
-                </a>
-            </li>
-        </ul>
-    </li>
-@endcan
+{{-- 
+ --}}
 
 @can('access_purchases')
     <li class="c-sidebar-nav-item c-sidebar-nav-dropdown {{ request()->routeIs('purchases.*') || request()->routeIs('purchase-payments*') ? 'c-show' : '' }}">
@@ -270,11 +251,11 @@
                     <i class="c-sidebar-nav-icon bi bi-person-lines-fill" style="line-height: 1;"></i> All Users
                 </a>
             </li>
-            <li class="c-sidebar-nav-item">
+            {{-- <li class="c-sidebar-nav-item">
                 <a class="c-sidebar-nav-link {{ request()->routeIs('roles*') ? 'c-active' : '' }}" href="{{ route('roles.index') }}">
                     <i class="c-sidebar-nav-icon bi bi-key" style="line-height: 1;"></i> Roles & Permissions
                 </a>
-            </li>
+            </li> --}}
         </ul>
     </li>
 @endcan

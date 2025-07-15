@@ -59,6 +59,7 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>Batch Code</th>
+                                    <th>Branch</th>
                                     <th>Harga Beli</th>
                                     <th>Price</th>
                                     <th>Stock</th>
@@ -69,6 +70,7 @@
                                 @forelse($product->batches as $batch)
                                     <tr>
                                         <td>{{ $batch->batch_code ?? '-' }}</td>
+                                        <td>{{ $batch->branch->name ?? '-' }}</td>
                                         <td>Rp {{ number_format($batch->unit_price, 0, ',', '.') }}</td>
                                         <td>Rp {{ number_format($batch->price, 0, ',', '.') }}</td>
                                         <td>{{ $batch->qty }}</td>

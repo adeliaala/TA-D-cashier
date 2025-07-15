@@ -1,5 +1,8 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
+use Modules\User\Http\Controllers\RolesController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -19,4 +22,8 @@ Route::group(['middleware' => 'auth'], function () {
     //Roles
     Route::resource('roles', 'RolesController')->except('show');
 
+});
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('roles/create-owner', [RolesController::class, 'createOwnerRole'])->name('roles.create-owner');
 });

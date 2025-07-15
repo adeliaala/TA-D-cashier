@@ -28,6 +28,13 @@ class Product extends Model implements HasMedia
     }
 
     /**
+     * Relasi ke unit
+     */
+    public function unit() {
+        return $this->belongsTo(\Modules\Setting\Entities\Unit::class, 'unit_id');
+    }
+
+    /**
      * Relasi ke batches (stok per cabang)
      */
     public function batches() {

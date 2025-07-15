@@ -7,18 +7,37 @@
                         <div class="form-row">
                             <div class="col-lg-6">
                                 <div class="form-group">
-                                    <label>Start Date <span class="text-danger">*</span></label>
-                                    <input wire:model="start_date" type="date" class="form-control" name="start_date">
-                                    @error('start_date')
+                                    <label>Bulan <span class="text-danger">*</span></label>
+                                    <select wire:model="month" class="form-control" name="month">
+                                        <option value="">Pilih Bulan</option>
+                                        <option value="1">Januari</option>
+                                        <option value="2">Februari</option>
+                                        <option value="3">Maret</option>
+                                        <option value="4">April</option>
+                                        <option value="5">Mei</option>
+                                        <option value="6">Juni</option>
+                                        <option value="7">Juli</option>
+                                        <option value="8">Agustus</option>
+                                        <option value="9">September</option>
+                                        <option value="10">Oktober</option>
+                                        <option value="11">November</option>
+                                        <option value="12">Desember</option>
+                                    </select>
+                                    @error('month')
                                     <span class="text-danger mt-1">{{ $message }}</span>
                                     @enderror
                                 </div>
                             </div>
                             <div class="col-lg-6">
                                 <div class="form-group">
-                                    <label>End Date <span class="text-danger">*</span></label>
-                                    <input wire:model="end_date" type="date" class="form-control" name="end_date">
-                                    @error('end_date')
+                                    <label>Tahun <span class="text-danger">*</span></label>
+                                    <select wire:model="year" class="form-control" name="year">
+                                        <option value="">Pilih Tahun</option>
+                                        @for($year = now()->year; $year >= 2025; $year--)
+                                            <option value="{{ $year }}">{{ $year }}</option>
+                                        @endfor
+                                    </select>
+                                    @error('year')
                                     <span class="text-danger mt-1">{{ $message }}</span>
                                     @enderror
                                 </div>
@@ -53,7 +72,7 @@
             </div>
         </div>
         {{-- Sale Returns --}}
-        <div class="col-12 col-lg-4">
+        {{-- <div class="col-12 col-lg-4">
             <div class="card border-0 shadow-sm">
                 <div class="card-body p-3 d-flex align-items-center">
                     <div class="bg-primary p-3 mfe-3 rounded">
@@ -65,7 +84,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> --}}
         {{-- Profit --}}
         <div class="col-12 col-lg-4">
             <div class="card border-0 shadow-sm">
@@ -95,7 +114,7 @@
             </div>
         </div>
         {{-- Purchase Returns --}}
-        <div class="col-12 col-lg-4">
+        {{-- <div class="col-12 col-lg-4">
             <div class="card border-0 shadow-sm">
                 <div class="card-body p-3 d-flex align-items-center">
                     <div class="bg-primary p-3 mfe-3 rounded">
@@ -107,7 +126,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> --}}
         {{-- Expenses --}}
         <div class="col-12 col-lg-4">
             <div class="card border-0 shadow-sm">
@@ -123,7 +142,7 @@
             </div>
         </div>
         {{-- Payments Received --}}
-        <div class="col-12 col-lg-4">
+        {{-- <div class="col-12 col-lg-4">
             <div class="card border-0 shadow-sm">
                 <div class="card-body p-3 d-flex align-items-center">
                     <div class="bg-primary p-3 mfe-3 rounded">
@@ -135,9 +154,9 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> --}}
         {{-- Payments Sent --}}
-        <div class="col-12 col-lg-4">
+        {{-- <div class="col-12 col-lg-4">
             <div class="card border-0 shadow-sm">
                 <div class="card-body p-3 d-flex align-items-center">
                     <div class="bg-primary p-3 mfe-3 rounded">
@@ -149,9 +168,9 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> --}}
         {{-- Payments Net --}}
-        <div class="col-12 col-lg-4">
+        {{-- <div class="col-12 col-lg-4">
             <div class="card border-0 shadow-sm">
                 <div class="card-body p-3 d-flex align-items-center">
                     <div class="bg-primary p-3 mfe-3 rounded">
@@ -163,6 +182,6 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> --}}
     </div>
 </div>

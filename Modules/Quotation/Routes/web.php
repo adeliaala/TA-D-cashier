@@ -1,5 +1,9 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
+use Nwidart\Modules\Facades\Module;
+use Barryvdh\DomPDF\Facade\Pdf;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -11,26 +15,28 @@
 |
 */
 
-Route::group(['middleware' => 'auth'], function () {
-    //Generate PDF
-    Route::get('/quotations/pdf/{id}', function ($id) {
-        $quotation = \Modules\Quotation\Entities\Quotation::findOrFail($id);
-        $customer = \Modules\People\Entities\Customer::findOrFail($quotation->customer_id);
+if (Module::isEnabled('Quotation')) {
+    Route::group(['middleware' => 'auth'], function () {
+        //Generate PDF
+        Route::get('/quotations/pdf/{id}', function ($id) {
+            $quotation = \Modules\Quotation\Entities\Quotation::findOrFail($id);
+            $customer = \Modules\People\Entities\Customer::findOrFail($quotation->customer_id);
 
-        $pdf = \PDF::loadView('quotation::print', [
-            'quotation' => $quotation,
-            'customer' => $customer,
-        ])->setPaper('a4');
+            $pdf = PDF::loadView('quotation::print', [
+                'quotation' => $quotation,
+                'customer' => $customer,
+            ])->setPaper('a4');
 
-        return $pdf->stream('quotation-'. $quotation->reference .'.pdf');
-    })->name('quotations.pdf');
+            return $pdf->stream('quotation-'. $quotation->reference .'.pdf');
+        })->name('quotations.pdf');
 
-    //Send Quotation Mail
-    Route::get('/quotation/mail/{quotation}', 'SendQuotationEmailController')->name('quotation.email');
+        //Send Quotation Mail
+        Route::get('/quotation/mail/{quotation}', 'SendQuotationEmailController')->name('quotation.email');
 
-    //Sales Form Quotation
-    Route::get('/quotation-sales/{quotation}', 'QuotationSalesController')->name('quotation-sales.create');
+        //Sales Form Quotation
+        Route::get('/quotation-sales/{quotation}', 'QuotationSalesController')->name('quotation-sales.create');
 
-    //quotations
-    Route::resource('quotations', 'QuotationController');
-});
+        //quotations
+        Route::resource('quotations', 'QuotationController');
+    });
+}

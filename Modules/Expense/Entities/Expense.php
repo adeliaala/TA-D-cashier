@@ -16,6 +16,10 @@ class Expense extends Model
         return $this->belongsTo(ExpenseCategory::class, 'category_id', 'id');
     }
 
+    public function branch() {
+        return $this->belongsTo(\App\Models\Branch::class, 'branch_id', 'id');
+    }
+
     public static function boot() {
         parent::boot();
 

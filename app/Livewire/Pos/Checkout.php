@@ -53,8 +53,15 @@ class Checkout extends Component
         $this->dispatch('showCheckoutModal');
     }
 
+    //kayaee disini ubah total
     public function calculateTotal() {
-        return Cart::instance($this->cart_instance)->total() + $this->shipping;
+        $cart = Cart::instance($this->cart_instance);
+        $total = $cart->subtotal(); // subtotal sebelum diskon dan pajak
+        $discount = $cart->discount();
+        $tax = $cart->tax();
+
+        // Total = subtotal - discount + tax 
+        return ($total - $discount + $tax );
     }
 
     public function resetCart() {
@@ -75,23 +82,26 @@ class Checkout extends Component
 
         $branchId = session('active_branch') ?? 1;
         $qty = 1;
-        $fifoPrice = ProductBatch::getFifoBatchPrice($product['id'], $branchId, $qty);
+        //$fifoPrice = ProductBatch::getFifoBatchPrice($product['id'], $branchId, $qty);
+        $fifoBatch = ProductBatch::getFifoBatch($product['id'], $branchId, 1);
+
 
         $cart->add([
             'id'      => $product['id'],
             'name'    => $product['product_name'],
             'qty'     => $qty,
-            'price'   => $fifoPrice,
+            'price' => $fifoBatch->price,
             'weight'  => 1,
             'options' => [
                 'product_discount'      => 0.00,
                 'product_discount_type' => 'fixed',
-                'sub_total'             => $fifoPrice,
+                'sub_total'             => $fifoBatch->price,
                 'code'                  => $product['product_code'],
                 'stock'                 => $product['product_quantity'],
                 'unit'                  => $product['product_unit'],
                 'product_tax'           => 0,
-                'unit_price'            => $fifoPrice
+                'price' => $fifoBatch->price, // harga jual
+                'unit_price' => $fifoBatch->unit_price, // harga beli
             ]
         ]);
 
@@ -132,7 +142,7 @@ class Checkout extends Component
                 'stock'                 => $cart_item->options->stock,
                 'unit'                  => $cart_item->options->unit,
                 'product_tax'           => $cart_item->options->product_tax,
-                'unit_price'            => $cart_item->options->unit_price,
+                'price'                 => $cart_item->options->price,
                 'product_discount'      => $cart_item->options->product_discount,
                 'product_discount_type' => $cart_item->options->product_discount_type,
             ]
@@ -175,28 +185,28 @@ class Checkout extends Component
 
     public function calculate($product) {
         $price = 0;
-        $unit_price = 0;
+        $price = 0;
         $product_tax = 0;
         $sub_total = 0;
 
         if ($product['product_tax_type'] == 1) {
             $price = $product['product_price'] + ($product['product_price'] * ($product['product_order_tax'] / 100));
-            $unit_price = $product['product_price'];
+            $price= $product['product_price'];
             $product_tax = $product['product_price'] * ($product['product_order_tax'] / 100);
             $sub_total = $product['product_price'] + ($product['product_price'] * ($product['product_order_tax'] / 100));
         } elseif ($product['product_tax_type'] == 2) {
             $price = $product['product_price'];
-            $unit_price = $product['product_price'] - ($product['product_price'] * ($product['product_order_tax'] / 100));
+            $price = $product['product_price'] - ($product['product_price'] * ($product['product_order_tax'] / 100));
             $product_tax = $product['product_price'] * ($product['product_order_tax'] / 100);
             $sub_total = $product['product_price'];
         } else {
             $price = $product['product_price'];
-            $unit_price = $product['product_price'];
+            $price= $product['product_price'];
             $product_tax = 0.00;
             $sub_total = $product['product_price'];
         }
 
-        return ['price' => $price, 'unit_price' => $unit_price, 'product_tax' => $product_tax, 'sub_total' => $sub_total];
+        return ['price' => $price, 'price' => $price, 'product_tax' => $product_tax, 'sub_total' => $sub_total];
     }
 
     public function updateCartOptions($row_id, $product_id, $cart_item, $discount_amount) {
@@ -206,7 +216,7 @@ class Checkout extends Component
             'stock'                 => $cart_item->options->stock,
             'unit'                 => $cart_item->options->unit,
             'product_tax'           => $cart_item->options->product_tax,
-            'unit_price'            => $cart_item->options->unit_price,
+            'price'                 => $cart_item->options->price,
             'product_discount'      => $discount_amount,
             'product_discount_type' => $this->discount_type[$product_id],
         ]]);

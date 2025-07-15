@@ -81,4 +81,53 @@ class RolesController extends Controller
 
         return redirect()->route('roles.index');
     }
+
+    public function createOwnerRole() {
+        abort_if(Gate::denies('access_user_management'), 403);
+
+        // Cek apakah role Owner sudah ada
+        $ownerRole = Role::where('name', 'Owner')->first();
+        
+        if (!$ownerRole) {
+            // Buat role Owner baru
+            $ownerRole = Role::create([
+                'name' => 'Owner'
+            ]);
+
+            // Berikan permission yang diperlukan
+            $permissions = [
+                // Dashboard permissions
+                'show_total_stats',
+                'show_month_overview',
+                'show_weekly_sales_purchases',
+                'show_monthly_cashflow',
+                'show_notifications',
+                
+                // Sales permissions
+                'access_sales',
+                'show_sales',
+                
+                // Purchases permissions
+                'access_purchases',
+                'show_purchases',
+                
+                // Reports permissions
+                'access_reports',
+                
+                // Currencies permissions
+                'access_currencies',
+                
+                // Settings permissions
+                'access_settings'
+            ];
+
+            $ownerRole->givePermissionTo($permissions);
+
+            toast('Owner Role Created Successfully!', 'success');
+        } else {
+            toast('Owner Role Already Exists!', 'warning');
+        }
+
+        return redirect()->route('roles.index');
+    }
 }
