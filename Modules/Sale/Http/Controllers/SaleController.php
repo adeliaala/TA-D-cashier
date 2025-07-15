@@ -38,15 +38,13 @@ class SaleController extends Controller
             if (!$branch_id) {
                 throw new \Exception("Branch belum dipilih.");
             }
+            $tax = Cart::instance('sale')->tax();
             $discount = Cart::instance('sale')->discount();
 
             $total_amount = 0 - $discount ;
             foreach (Cart::instance('sale')->content() as $item) {
                 $total_amount +=  $item->options->sub_total; // sub_total sudah diskon
             }
-
-            $tax = Cart::instance('sale')->tax();
-            
 
             // Total amount hanya total bersih + pajak
             //$total_amount = $total + $tax + $discount;

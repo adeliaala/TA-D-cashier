@@ -18,6 +18,9 @@ class ExpensesDataTable extends DataTable
             ->addColumn('amount', function ($data) {
                 return format_currency($data->amount);
             })
+            ->addColumn('branch_id', function ($data) {
+                return $data->branch ? $data->branch->name : '-';
+            })
             ->addColumn('action', function ($data) {
                 return view('expense::expenses.partials.actions', compact('data'));
             });
@@ -57,9 +60,9 @@ class ExpensesDataTable extends DataTable
                 ->className('text-center align-middle'),
 
             Column::make('branch_id')
-                ->title('Cabang')
-                ->className('text-center align-middle')
-                ->visible(false),
+                ->title('Branch')
+                ->data('branch_id')
+                ->className('text-center align-middle'),
 
             Column::make('category.category_name')
                 ->title('Kategori')

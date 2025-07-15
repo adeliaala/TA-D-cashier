@@ -15,48 +15,56 @@
             <div class="col-12">
                 <div class="card border-0 shadow-sm">
                     <div class="card-body">
-                        <form method="GET" action="{{ route('home') }}">
-                            <div class="form-row">
-                                <div class="col-lg-4">
+                        <form wire:submit.prevent="filterData">
+                            <div class="row d-flex justify-content-between align-items-end">
+                                <div class="col">
                                     <div class="form-group">
-                                        <label for="filterBulan"><h5>Bulan</h5></label>
-                                        <select class="form-control" id="filterBulan" name="filterBulan">
+                                        <label for="filterBulan">Bulan</label>
+                                        <select wire:model="filterBulan" class="form-control" id="filterBulan" name="filterBulan">
                                             <option value="">Pilih Bulan</option>
-                                            @foreach(range(1, 12) as $month)
-                                                <option value="{{ str_pad($month, 2, '0', STR_PAD_LEFT) }}"
-                                                    {{ request('filterBulan') == str_pad($month, 2, '0', STR_PAD_LEFT) ? 'selected' : '' }}>
-                                                    {{ \Carbon\Carbon::create()->month($month)->translatedFormat('F') }}
-                                                </option>
-                                            @endforeach
+                                            <option value="01">Januari</option>
+                                            <option value="02">Februari</option>
+                                            <option value="03">Maret</option>
+                                            <option value="04">April</option>
+                                            <option value="05">Mei</option>
+                                            <option value="06">Juni</option>
+                                            <option value="07">Juli</option>
+                                            <option value="08">Agustus</option>
+                                            <option value="09">September</option>
+                                            <option value="10">Oktober</option>
+                                            <option value="11">November</option>
+                                            <option value="12">Desember</option>
                                         </select>
+                                        @error('filterBulan')
+                                        <span class="text-danger mt-1">{{ $message }}</span>
+                                        @enderror
                                     </div>
                                 </div>
-                        
-                                <div class="col-lg-4">
+                                <div class="col">
                                     <div class="form-group">
-                                        <label for="filterTahun"><h5>Tahun</h5></label>
-                                        <select class="form-control" id="filterTahun" name="filterTahun">
+                                        <label for="filterTahun">Tahun</label>
+                                        <select wire:model="filterTahun" class="form-control" id="filterTahun" name="filterTahun">
                                             <option value="">Pilih Tahun</option>
-                                            @for ($year = now()->year; $year >= 2025; $year--)
-                                                <option value="{{ $year }}" {{ request('filterTahun') == $year ? 'selected' : '' }}>
-                                                    {{ $year }}
-                                                </option>
+                                            @for ($year = date('Y'); $year >= 2025; $year--)
+                                                <option value="{{ $year }}">{{ $year }}</option>
                                             @endfor
                                         </select>
+                                        @error('filterTahun')
+                                        <span class="text-danger mt-1">{{ $message }}</span>
+                                        @enderror
                                     </div>
                                 </div>
-                        
-                                <div class="col-lg-4 d-flex align-items-end">
+                                <div class="col d-flex align-items-end">
                                     <div class="form-group w-100">
                                         <button type="submit" class="btn btn-primary w-100">
-                                            <i class="bi bi-funnel-fill"></i> Filter
+                                            <span wire:target="filterData" wire:loading class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                            <i wire:loading.remove wire:target="filterData" class="bi bi-funnel-fill"></i>
+                                            Filter
                                         </button>
                                     </div>
                                 </div>
                             </div>
                         </form>
-                        
-                        
                     </div>
                 </div>
             </div>

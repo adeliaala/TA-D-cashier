@@ -28,8 +28,8 @@ class SalesReport extends Component
 
     public function mount($customers) {
         $this->customers = $customers;
-        $this->month ;
-        $this->year ;
+        $this->month = now()->month;
+        $this->year = now()->year;
         $this->customer_id = '';
         $this->sale_status = '';
         $this->payment_status = '';
@@ -37,43 +37,31 @@ class SalesReport extends Component
     }
 
     public function render() {
-        $query = Sale::query();
-    
-        if ($this->year) {
-            $query->whereYear('date', $this->year);
-        }
-    
-        if ($this->month) {
-            $query->whereMonth('date', $this->month);
-        }
-    
-        $query->when($this->customer_id, function ($query) {
-            return $query->where('customer_id', $this->customer_id);
-        });
-    
-        $query->when($this->customer_type, function ($query) {
-            if ($this->customer_type === 'walk_in') {
-                return $query->where('customer_id', 1);
-            } elseif ($this->customer_type === 'member') {
-                return $query->where('customer_id', '!=', 1);
-            }
-        });
-    
-        $query->when($this->sale_status, function ($query) {
-            return $query->where('status', $this->sale_status);
-        });
-    
-        $query->when($this->payment_status, function ($query) {
-            return $query->where('payment_status', $this->payment_status);
-        });
-    
-        $sales = $query->orderBy('date', 'desc')->paginate(10);
-    
+        $sales = Sale::whereYear('date', $this->year)
+            ->whereMonth('date', $this->month)
+            ->when($this->customer_id, function ($query) {
+                return $query->where('customer_id', $this->customer_id);
+            })
+            ->when($this->customer_type, function ($query) {
+                if ($this->customer_type === 'walk_in') {
+                    return $query->where('customer_id', 1);
+                } elseif ($this->customer_type === 'member') {
+                    return $query->where('customer_id', '!=', 1);
+                }
+                return $query;
+            })
+            ->when($this->sale_status, function ($query) {
+                return $query->where('status', $this->sale_status);
+            })
+            ->when($this->payment_status, function ($query) {
+                return $query->where('payment_status', $this->payment_status);
+            })
+            ->orderBy('date', 'desc')->paginate(10);
+
         return view('livewire.reports.sales-report', [
             'sales' => $sales
         ]);
     }
-    
 
     public function generateReport() {
         $this->validate();
